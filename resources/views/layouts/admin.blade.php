@@ -209,6 +209,10 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        .resident-table-card {
+            grid-column: 1 / -1;
+        }
+
         .card,
         .stat {
             padding: 24px;
@@ -234,9 +238,142 @@
             margin-bottom: 16px;
         }
 
+        .admin-form {
+            display: grid;
+            gap: 18px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .form-field {
+            display: grid;
+            gap: 7px;
+            color: var(--text);
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .form-field input {
+            width: 100%;
+            min-height: 46px;
+            padding: 11px 13px;
+            border: 1px solid rgba(23, 48, 36, 0.14);
+            border-radius: 12px;
+            outline: 0;
+            background: rgba(255, 255, 255, 0.78);
+            color: var(--text);
+            font: inherit;
+            font-weight: 400;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .form-field input::placeholder {
+            color: #9aa69e;
+        }
+
+        .form-field input:focus {
+            border-color: var(--success);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(45, 124, 84, 0.12);
+        }
+
+        .form-section-label {
+            display: block;
+            margin: 2px 0 -4px;
+            color: var(--success);
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .form-submit {
+            justify-self: start;
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--sidebar);
+            color: #fffdf6;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 160ms ease, transform 160ms ease;
+        }
+
+        .form-submit:hover {
+            background: var(--success);
+            transform: translateY(-1px);
+        }
+
         .table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .resident-table {
+            table-layout: fixed;
+            font-size: 0.86rem;
+        }
+
+        .resident-table th,
+        .resident-table td {
+            padding: 10px 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .resident-table th:nth-child(1) {
+            width: 16%;
+        }
+
+        .resident-table th:nth-child(2),
+        .resident-table th:nth-child(3) {
+            width: 9%;
+        }
+
+        .resident-table th:nth-child(4) {
+            width: 12%;
+        }
+
+        .resident-table th:nth-child(5) {
+            width: 13%;
+        }
+
+        .resident-table th:nth-child(6) {
+            width: 9%;
+        }
+
+        .resident-table th:nth-child(7) {
+            width: 12%;
+        }
+
+        .resident-table th:nth-child(8),
+        .resident-table th:nth-child(9) {
+            width: 10%;
+        }
+
+        .resident-table .form-submit {
+            padding: 8px 10px;
+            font-size: 0.78rem;
+        }
+
+        .resident-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .resident-actions form {
+            margin: 0;
         }
 
         .table th,
@@ -329,6 +466,10 @@
             .shell {
                 grid-template-columns: 1fr;
             }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 760px) {
@@ -350,7 +491,7 @@
         }
     </style>
 </head>
-<body>
+<body data-active-tab="{{ $activeTab ?? 'overview' }}">
     <div class="shell">
         <aside class="sidebar">
             <h2>Barangay Bagumbayan</h2>
@@ -400,6 +541,7 @@
     <script>
         const tabs = document.querySelectorAll('[data-tab-target]');
         const panels = document.querySelectorAll('[data-tab-panel]');
+        const activeTab = document.body.dataset.activeTab || 'overview';
 
         function activateTab(target) {
             tabs.forEach((tab) => {
@@ -416,8 +558,38 @@
         });
 
         if (tabs.length > 0) {
-            activateTab(tabs[0].dataset.tabTarget);
+            activateTab(activeTab);
         }
+
+        document.querySelectorAll('input[name="active_tab"]').forEach((input) => {
+            input.value = activeTab;
+        });
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('input[name="active_tab"]').forEach((input) => {
+                    input.value = tab.dataset.tabTarget;
+                });
+            });
+        });
+
+        document.querySelectorAll('.resident-edit').forEach((button) => {
+            button.addEventListener('click', () => {
+                document.querySelector('#edit-resident-id').value = button.dataset.residentId;
+                document.querySelector('#edit-first-name').value = button.dataset.firstName;
+                document.querySelector('#edit-middle-name').value = button.dataset.middleName;
+                document.querySelector('#edit-last-name').value = button.dataset.lastName;
+                document.querySelector('#edit-date-of-birth').value = button.dataset.dateOfBirth;
+                document.querySelector('#edit-gender').value = button.dataset.gender;
+                document.querySelector('#edit-contact-number').value = button.dataset.contactNumber;
+                document.querySelector('#assignment-resident-id').value = button.dataset.residentId;
+                document.querySelector('#assignment-household-id').value = button.dataset.householdId;
+                document.querySelector('#assignment-house-number').value = button.dataset.houseNumber;
+                document.querySelector('#assignment-zone-purok').value = button.dataset.zonePurok;
+                document.querySelector('#resident-details-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.querySelector('#edit-first-name').focus();
+            });
+        });
     </script>
 </body>
 </html>
