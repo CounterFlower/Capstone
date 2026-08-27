@@ -257,7 +257,8 @@
             font-weight: 700;
         }
 
-        .form-field input {
+        .form-field input,
+        .form-field textarea {
             width: 100%;
             min-height: 46px;
             padding: 11px 13px;
@@ -271,11 +272,18 @@
             transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
-        .form-field input::placeholder {
+        .form-field textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-field input::placeholder,
+        .form-field textarea::placeholder {
             color: #9aa69e;
         }
 
-        .form-field input:focus {
+        .form-field input:focus,
+        .form-field textarea:focus {
             border-color: var(--success);
             background: #fff;
             box-shadow: 0 0 0 4px rgba(45, 124, 84, 0.12);
@@ -331,33 +339,41 @@
         }
 
         .resident-table th:nth-child(1) {
-            width: 16%;
+            width: 14%;
         }
 
         .resident-table th:nth-child(2),
         .resident-table th:nth-child(3) {
-            width: 9%;
+            width: 8%;
         }
 
         .resident-table th:nth-child(4) {
-            width: 12%;
+            width: 10%;
         }
 
         .resident-table th:nth-child(5) {
-            width: 13%;
+            width: 11%;
         }
 
         .resident-table th:nth-child(6) {
-            width: 9%;
+            width: 10%;
         }
 
         .resident-table th:nth-child(7) {
-            width: 12%;
+            width: 8%;
         }
 
-        .resident-table th:nth-child(8),
+        .resident-table th:nth-child(8) {
+            width: 10%;
+        }
+
         .resident-table th:nth-child(9) {
             width: 10%;
+        }
+
+        .resident-table th:nth-child(10),
+        .resident-table th:nth-child(11) {
+            width: 9%;
         }
 
         .resident-table .form-submit {
@@ -580,12 +596,13 @@
                 document.querySelector('#edit-middle-name').value = button.dataset.middleName;
                 document.querySelector('#edit-last-name').value = button.dataset.lastName;
                 document.querySelector('#edit-date-of-birth').value = button.dataset.dateOfBirth;
+                document.querySelector('#edit-place-of-birth').value = button.dataset.placeOfBirth;
                 document.querySelector('#edit-gender').value = button.dataset.gender;
+                document.querySelector('#edit-civil-status').value = button.dataset.civilStatus;
                 document.querySelector('#edit-contact-number').value = button.dataset.contactNumber;
-                document.querySelector('#assignment-resident-id').value = button.dataset.residentId;
-                document.querySelector('#assignment-household-id').value = button.dataset.householdId;
-                document.querySelector('#assignment-house-number').value = button.dataset.houseNumber;
-                document.querySelector('#assignment-zone-purok').value = button.dataset.zonePurok;
+                document.querySelector('#edit-household-id').value = button.dataset.householdId;
+                document.querySelector('#edit-house-number').value = button.dataset.houseNumber;
+                document.querySelector('#edit-zone-purok').value = button.dataset.zonePurok;
                 document.querySelector('#resident-details-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
                 document.querySelector('#edit-first-name').focus();
             });

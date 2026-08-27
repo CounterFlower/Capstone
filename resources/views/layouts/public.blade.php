@@ -254,6 +254,130 @@
             grid-template-columns: 1.1fr 0.9fr;
         }
 
+        .request-layout {
+            align-items: start;
+        }
+
+        .form-card {
+            overflow: hidden;
+        }
+
+        .card-header {
+            margin-bottom: 18px;
+        }
+
+        .compact {
+            margin-bottom: 6px;
+            letter-spacing: 0.08em;
+        }
+
+        .request-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .two-col {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .three-col {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .four-col {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .single-col {
+            grid-template-columns: 1fr;
+        }
+
+        .request-form label {
+            display: grid;
+            gap: 8px;
+            color: var(--text);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .request-form input,
+        .request-form select {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 12px;
+            border: 1px solid rgba(22, 48, 36, 0.14);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--text);
+            font: inherit;
+        }
+
+        .request-form input:focus,
+        .request-form select:focus {
+            outline: 0;
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(46, 125, 86, 0.12);
+        }
+
+        .status-box {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .status-box.success {
+            background: rgba(46, 125, 86, 0.12);
+            color: var(--success);
+        }
+
+        .status-box.error {
+            background: rgba(181, 83, 67, 0.12);
+            color: #a34535;
+        }
+
+        .submit-row {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 8px;
+        }
+
+        .side-card {
+            display: grid;
+            gap: 18px;
+        }
+
+        .process-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .process-step {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(22, 48, 36, 0.08);
+        }
+
+        .info-box {
+            padding: 18px 18px 10px;
+            border-radius: 18px;
+            background: rgba(214, 160, 62, 0.08);
+            border: 1px solid rgba(214, 160, 62, 0.18);
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.8;
+        }
+
         .list-item + .list-item {
             margin-top: 12px;
         }

@@ -10,14 +10,6 @@
             ['id' => 'IR-010', 'type' => 'Property Damage', 'resident' => 'Ana Villanueva', 'respondent' => 'Rico Flores', 'date' => 'May 02, 2026', 'status' => 'Pending Review', 'badge' => 'warn'],
         ];
 
-        $documentRequests = [
-            ['id' => 'DR-101', 'resident' => 'Maria Santos', 'document' => 'Certificate of Residency', 'purpose' => 'School Requirement', 'date' => 'May 07, 2026', 'status' => 'For Approval', 'badge' => 'warn'],
-            ['id' => 'DR-099', 'resident' => 'Juan Dela Cruz', 'document' => 'Barangay Clearance', 'purpose' => 'Employment', 'date' => 'May 06, 2026', 'status' => 'Ready for Release', 'badge' => 'good'],
-            ['id' => 'DR-097', 'resident' => 'Pedro Ramos', 'document' => 'Business Endorsement', 'purpose' => 'Permit Renewal', 'date' => 'May 05, 2026', 'status' => 'Needs Validation', 'badge' => 'alert'],
-            ['id' => 'DR-095', 'resident' => 'Liza Mendoza', 'document' => 'Certificate of Indigency', 'purpose' => 'Medical Assistance', 'date' => 'May 04, 2026', 'status' => 'Processing', 'badge' => 'warn'],
-            ['id' => 'DR-093', 'resident' => 'Noel Villanueva', 'document' => 'Barangay Clearance', 'purpose' => 'Loan Application', 'date' => 'May 03, 2026', 'status' => 'Released', 'badge' => 'good'],
-        ];
-
         $analyticsBlocks = [
             ['label' => 'Document requests completed', 'value' => '78%', 'width' => '78%'],
             ['label' => 'Resident profiles completed', 'value' => '92%', 'width' => '92%'],
@@ -182,7 +174,9 @@
                             <th>Household ID</th>
                             <th>Purok</th>
                             <th>Date of Birth</th>
+                            <th>Place of Birth</th>
                             <th>Gender</th>
+                            <th>Civil Status</th>
                             <th>Contact</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -196,11 +190,13 @@
                                 <td>{{ $resident->Household_Id ?? 'Pending' }}</td>
                                 <td>{{ $resident->Zone_Purok ?? 'Not assigned' }}</td>
                                 <td>{{ $resident->Date_of_Birth ?? 'Not provided' }}</td>
+                                <td>{{ $resident->Place_of_Birth ?? 'Not provided' }}</td>
                                 <td>{{ $resident->Gender ?? 'Not provided' }}</td>
+                                <td>{{ $resident->Civil_Status ?? 'Not provided' }}</td>
                                 <td>{{ $resident->Contact_Number ?? 'Not provided' }}</td>
                                 <td><span class="badge {{ $resident->Is_Verified ? 'good' : 'warn' }}">{{ $resident->Is_Verified ? 'Verified' : 'Pending' }}</span></td>
                                 <td class="resident-actions">
-                                    <button type="button" class="form-submit resident-edit" data-resident-id="{{ $resident->Resident_ID }}" data-first-name="{{ $resident->First_Name }}" data-middle-name="{{ $resident->Middle_Name }}" data-last-name="{{ $resident->Last_Name }}" data-date-of-birth="{{ $resident->Date_of_Birth }}" data-gender="{{ $resident->Gender }}" data-contact-number="{{ $resident->Contact_Number }}" data-household-id="{{ $resident->Household_Id }}" data-house-number="{{ $resident->House_Number }}" data-zone-purok="{{ $resident->Zone_Purok }}">Edit</button>
+                                    <button type="button" class="form-submit resident-edit" data-resident-id="{{ $resident->Resident_ID }}" data-first-name="{{ $resident->First_Name }}" data-middle-name="{{ $resident->Middle_Name }}" data-last-name="{{ $resident->Last_Name }}" data-date-of-birth="{{ $resident->Date_of_Birth }}" data-place-of-birth="{{ $resident->Place_of_Birth }}" data-gender="{{ $resident->Gender }}" data-civil-status="{{ $resident->Civil_Status }}" data-contact-number="{{ $resident->Contact_Number }}" data-household-id="{{ $resident->Household_Id }}" data-house-number="{{ $resident->House_Number }}" data-zone-purok="{{ $resident->Zone_Purok }}">Edit</button>
                                     <form method="POST" action="{{ route('admin.residents.verify') }}">
                                         @csrf
                                         <input type="hidden" name="active_tab" value="residents">
@@ -213,7 +209,7 @@
                         @endforeach
                         @if ($residentProfiles->isEmpty())
                             <tr>
-                                <td colspan="9">No resident profiles found.</td>
+                                <td colspan="11">No resident profiles found.</td>
                             </tr>
                         @endif
                     </tbody>
@@ -232,7 +228,9 @@
                         <label class="form-field">Middle name<input name="middle_name" value="{{ old('middle_name') }}" placeholder="Optional"></label>
                         <label class="form-field">Last name<input name="last_name" value="{{ old('last_name') }}" placeholder="e.g. Santos" required></label>
                         <label class="form-field">Date of birth<input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}"></label>
+                        <label class="form-field">Place of birth<input name="place_of_birth" value="{{ old('place_of_birth') }}" placeholder="e.g. Pasig City"></label>
                         <label class="form-field">Gender<input name="gender" value="{{ old('gender') }}" placeholder="e.g. Female"></label>
+                        <label class="form-field">Civil status<input name="civil_status" value="{{ old('civil_status') }}" placeholder="e.g. Single"></label>
                         <label class="form-field">Contact number<input name="contact_number" value="{{ old('contact_number') }}" placeholder="e.g. 0917 555 0101"></label>
                     </div>
                     <span class="form-section-label">Household assignment</span>
@@ -249,40 +247,30 @@
             </article>
 
             <article class="card">
-                <h2>Complete Household Assignment</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Use this when a resident returns with their official household ID.</p>
-                <form class="admin-form" method="POST" action="{{ route('admin.residents.assign-household') }}">
-                    @csrf
-                    <input type="hidden" name="active_tab" value="residents">
-                    <div class="form-grid">
-                        <label class="form-field">Resident ID<input id="assignment-resident-id" type="number" name="resident_id" value="{{ old('resident_id') }}" placeholder="e.g. 24" readonly required></label>
-                        <label class="form-field">Official household ID<input id="assignment-household-id" type="number" name="household_id" value="{{ old('household_id') }}" placeholder="e.g. 101" required></label>
-                        <label class="form-field">House number<input id="assignment-house-number" name="house_number" value="{{ old('house_number') }}" placeholder="e.g. 14" required></label>
-                        <label class="form-field">Purok<input id="assignment-zone-purok" name="zone_purok" value="{{ old('zone_purok') }}" placeholder="e.g. Purok 2" required></label>
-                    </div>
-                    @if ($errors->has('assignment'))
-                        <div class="badge alert">{{ $errors->first('assignment') }}</div>
-                    @endif
-                    <button type="submit" class="form-submit">Update assignment</button>
-                </form>
-            </article>
-
-            <article class="card">
-                <h2>Update Resident Details</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Edit a resident's personal information without changing their household assignment.</p>
+                <h2>Update Resident Profile</h2>
+                <p class="subtext" style="margin-bottom: 16px;">Click Edit in the table to load existing values, then update personal and household details in one form.</p>
                 <form id="resident-details-form" class="admin-form" method="POST" action="{{ route('admin.residents.update') }}">
                     @csrf
                     <input type="hidden" name="active_tab" value="residents">
+                    <span class="form-section-label">Personal details</span>
                     <div class="form-grid">
                         <label class="form-field">Resident ID<input id="edit-resident-id" type="number" name="resident_id" value="{{ old('resident_id') }}" placeholder="e.g. 24" readonly required></label>
                         <label class="form-field">First name<input id="edit-first-name" name="first_name" value="{{ old('first_name') }}" placeholder="e.g. Maria" required></label>
                         <label class="form-field">Middle name<input id="edit-middle-name" name="middle_name" value="{{ old('middle_name') }}" placeholder="Optional"></label>
                         <label class="form-field">Last name<input id="edit-last-name" name="last_name" value="{{ old('last_name') }}" placeholder="e.g. Santos" required></label>
                         <label class="form-field">Date of birth<input id="edit-date-of-birth" type="date" name="date_of_birth" value="{{ old('date_of_birth') }}"></label>
+                        <label class="form-field">Place of birth<input id="edit-place-of-birth" name="place_of_birth" value="{{ old('place_of_birth') }}" placeholder="e.g. Pasig City"></label>
                         <label class="form-field">Gender<input id="edit-gender" name="gender" value="{{ old('gender') }}" placeholder="e.g. Female"></label>
+                        <label class="form-field">Civil status<input id="edit-civil-status" name="civil_status" value="{{ old('civil_status') }}" placeholder="e.g. Single"></label>
                         <label class="form-field">Contact number<input id="edit-contact-number" name="contact_number" value="{{ old('contact_number') }}" placeholder="e.g. 0917 555 0101"></label>
                     </div>
-                    <button type="submit" class="form-submit">Save resident details</button>
+                    <span class="form-section-label">Household assignment</span>
+                    <div class="form-grid">
+                        <label class="form-field">House number<input id="edit-house-number" name="house_number" value="{{ old('house_number') }}" placeholder="e.g. 14" required></label>
+                        <label class="form-field">Purok<input id="edit-zone-purok" name="zone_purok" value="{{ old('zone_purok') }}" placeholder="e.g. Purok 2" required></label>
+                        <label class="form-field">Household ID <span style="font-weight: 400; color: var(--muted);">(optional)</span><input id="edit-household-id" type="number" name="household_id" value="{{ old('household_id') }}" placeholder="Leave blank if unknown"></label>
+                    </div>
+                    <button type="submit" class="form-submit">Save resident profile</button>
                 </form>
             </article>
 
@@ -301,30 +289,44 @@
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'requests' ? 'active' : '' }}" data-tab-panel="requests">
         <section class="panels" id="requests">
             <article class="card">
-                <h2>Document Request Monitoring</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Sample administrative view for tracking resident requests and document types.</p>
+                <h2>Pending Document Requests</h2>
+                <p class="subtext" style="margin-bottom: 16px;">Resident requests linked by Resident_ID and awaiting staff approval.</p>
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Request ID</th>
                             <th>Resident</th>
+                            <th>Resident ID</th>
                             <th>Document Type</th>
                             <th>Purpose</th>
                             <th>Date Requested</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($documentRequests as $request)
+                        @forelse ($pendingDocumentRequests as $request)
                             <tr>
-                                <td>{{ $request['id'] }}</td>
-                                <td>{{ $request['resident'] }}</td>
-                                <td>{{ $request['document'] }}</td>
-                                <td>{{ $request['purpose'] }}</td>
-                                <td>{{ $request['date'] }}</td>
-                                <td><span class="badge {{ $request['badge'] }}">{{ $request['status'] }}</span></td>
+                                <td>{{ $request->Request_ID }}</td>
+                                <td>{{ $request->Resident_Name }}</td>
+                                <td>{{ $request->Resident_ID }}</td>
+                                <td>{{ $request->Document_Type }}</td>
+                                <td>{{ $request->Purpose ?: 'Not specified' }}</td>
+                                <td>{{ \Carbon\Carbon::parse($request->Date_Requested)->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
+                                <td><span class="badge warn">{{ $request->Status }}</span></td>
+                                <td>
+                                    <form method="POST" action="{{ route('admin.documents.approve') }}">
+                                        @csrf
+                                        <input type="hidden" name="request_id" value="{{ $request->Request_ID }}">
+                                        <button type="submit" class="form-submit">Approve</button>
+                                    </form>
+                                </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="8">No pending document requests.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </article>
@@ -343,6 +345,29 @@
 
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'events' ? 'active' : '' }}" data-tab-panel="events">
         <section class="panels">
+            <article class="card">
+                <h2>Create Event</h2>
+                @if (session('status'))
+                    <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
+                @endif
+                <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}">
+                    @csrf
+                    <input type="hidden" name="active_tab" value="events">
+                    <div class="form-grid">
+                        <label class="form-field">Event title<input name="title" value="{{ old('title') }}" placeholder="e.g. Barangay Clean-up Drive" required></label>
+                        <label class="form-field">Event date<input type="date" name="date" value="{{ old('date') }}" required></label>
+                        <label class="form-field">Event time<input type="time" name="time" value="{{ old('time') }}" required></label>
+                        <label class="form-field">Venue<input name="venue" value="{{ old('venue') }}" placeholder="e.g. Covered Court" required></label>
+                        <label class="form-field">Available slots<input type="number" name="available_slots" min="1" value="{{ old('available_slots') }}" placeholder="e.g. 50"></label>
+                    </div>
+                    <label class="form-field" style="margin-top: 16px; display: block;">Summary<textarea name="summary" rows="4" placeholder="Brief event description">{{ old('summary') }}</textarea></label>
+                    @if ($errors->any())
+                        <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
+                    @endif
+                    <button type="submit" class="form-submit" style="margin-top: 16px;">Save event</button>
+                </form>
+            </article>
+
             <article class="card">
                 <h2>Event Registration Summary</h2>
                 <p class="subtext" style="margin-bottom: 16px;">Residents who signed up for barangay activities from the public event page.</p>
@@ -375,15 +400,17 @@
             </article>
 
             <article class="card">
-                <h2>Activity Sign-Up Totals</h2>
+                <h2>Scheduled Activities</h2>
                 <div class="list">
-                    @foreach ($eventCounts as $eventCount)
+                    @forelse ($events as $event)
                         <div class="list-item">
-                            <strong>{{ $eventCount['title'] }}</strong>
-                            {{ $eventCount['date'] }}<br>
-                            {{ $eventCount['count'] }} resident sign-up(s)
+                            <strong>{{ $event->title }}</strong>
+                            {{ $event->date }} at {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}<br>
+                            {{ $event->venue }}
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="list-item">No events created yet.</div>
+                    @endforelse
                 </div>
             </article>
         </section>
