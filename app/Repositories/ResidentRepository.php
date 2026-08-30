@@ -65,19 +65,17 @@ class ResidentRepository
 
         $query = DB::table('incident_blotter as ib')
             ->leftJoin('incident_types as it', 'it.Category_Id', '=', 'ib.Category_Id')
-            ->leftJoin('resident as r', function ($join) {
-                $join->on('r.Resident_ID', '=', 'ib.Complainant_Id')
-                    ->orOn('r.Resident_ID', '=', 'ib.Respondent_Id');
-            });
+            ->leftJoin('resident as complainant', 'complainant.Resident_ID', '=', 'ib.Complainant_Id')
+            ->leftJoin('resident as respondent', 'respondent.Resident_ID', '=', 'ib.Respondent_Id');
 
         if (Schema::hasTable('guest')) {
             $query->leftJoin('guest as g', 'g.Guest_Id', '=', 'ib.Guest_Id');
         }
 
-        $reporterExpression = "CONCAT(r.First_Name, ' ', COALESCE(r.Middle_Name, ''), ' ', r.Last_Name)";
+        $reporterExpression = "CONCAT(complainant.First_Name, ' ', COALESCE(complainant.Middle_Name, ''), ' ', complainant.Last_Name)";
 
         if (Schema::hasTable('guest')) {
-            $reporterExpression = "COALESCE(\n                    CONCAT(r.First_Name, ' ', COALESCE(r.Middle_Name, ''), ' ', r.Last_Name),\n                    CONCAT(g.First_Name, ' ', COALESCE(g.Middle_Name, ''), ' ', g.Last_Name)\n                )";
+            $reporterExpression = "COALESCE(\n                    CONCAT(complainant.First_Name, ' ', COALESCE(complainant.Middle_Name, ''), ' ', complainant.Last_Name),\n                    CONCAT(g.First_Name, ' ', COALESCE(g.Middle_Name, ''), ' ', g.Last_Name)\n                )";
         }
 
         return $query

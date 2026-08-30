@@ -169,6 +169,59 @@ class IncidentReportingTest extends TestCase
         ]);
     }
 
+    public function test_case_monitoring_does_not_duplicate_a_single_incident_when_complainant_and_respondent_are_different(): void
+    {
+        \DB::table('resident')->insert([
+            [
+                'Resident_ID' => 1,
+                'First_Name' => 'Maria',
+                'Middle_Name' => 'Santos',
+                'Last_Name' => 'Dela Cruz',
+                'Date_of_Birth' => '1990-05-15',
+                'Contact_Number' => '09181234567',
+                'Household_Index' => 1,
+                'Is_Verified' => 1,
+            ],
+            [
+                'Resident_ID' => 2,
+                'First_Name' => 'Juan',
+                'Middle_Name' => 'M.',
+                'Last_Name' => 'Cruz',
+                'Date_of_Birth' => '1988-02-01',
+                'Contact_Number' => '09185551234',
+                'Household_Index' => 1,
+                'Is_Verified' => 1,
+            ],
+        ]);
+
+        \DB::table('incident_types')->insert([
+            'Category_Id' => 1,
+            'Category' => 'Noise Complaint',
+        ]);
+
+        \DB::table('incident_blotter')->insert([
+            'Incident_ID' => 11,
+            'Complainant_Id' => 1,
+            'Respondent_Id' => 2,
+            'Guest_Id' => null,
+            'Category_Id' => 1,
+            'Description' => 'Loud music every night',
+            'Requested_Relief' => 'Barangay intervention',
+            'Date_Reported' => now()->subDay(),
+            'Date_Filed' => now()->subDay(),
+            'Resolution_Status' => 'Pending',
+            'Latitude' => null,
+            'Longitude' => null,
+            'Handled_By' => null,
+        ]);
+
+        $response = $this->withSession(['is_admin' => true, 'admin_user_id' => 7])
+            ->get('/admin?tab=cases');
+
+        $response->assertOk();
+        $this->assertSame(1, substr_count($response->getContent(), 'Loud music every night'));
+    }
+
     public function test_admin_dashboard_shows_live_cases_and_review_updates_status(): void
     {
         \DB::table('incident_types')->insert([
