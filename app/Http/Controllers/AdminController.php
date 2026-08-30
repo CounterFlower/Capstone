@@ -27,8 +27,30 @@ class AdminController extends Controller
             'eventCounts' => $dashboardData['eventCounts'],
             'residentProfiles' => $dashboardData['residentProfiles'],
             'pendingDocumentRequests' => $dashboardData['pendingDocumentRequests'],
+            'caseRecords' => $this->residentService->getIncidentCases(),
             'events' => $events,
             'activeTab' => $request->query('tab', 'overview'),
         ]);
+    }
+
+    public function reviewIncident(Request $request)
+    {
+        if (! session('is_admin')) {
+            return redirect()->route('admin.login');
+        }
+
+        $payload = $request->validate([
+            'incident_id' => ['required', 'integer'],
+            'resolution_status' => ['required', 'string', 'in:Pending,Active,Resolved,Escalated'],
+        ]);
+
+        $this->residentService->reviewIncident(
+            (int) $payload['incident_id'],
+            $payload['resolution_status'],
+            (int) (session('admin_user_id') ?? 1),
+        );
+
+        return redirect()->route('admin.dashboard', ['tab' => 'cases'])
+            ->with('status', 'Case review saved successfully.');
     }
 }

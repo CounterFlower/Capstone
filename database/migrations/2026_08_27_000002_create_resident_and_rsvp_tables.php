@@ -20,7 +20,7 @@ return new class extends Migration
 
         Schema::create('resident', function (Blueprint $table) {
             $table->increments('Resident_ID');
-            $table->unsignedInteger('Household_ID')->nullable();
+            $table->unsignedInteger('Household_Index')->nullable();
             $table->string('First_Name');
             $table->string('Middle_Name')->nullable();
             $table->string('Last_Name');

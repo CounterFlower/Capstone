@@ -85,7 +85,7 @@ class PrototypeEventService
         return DB::table('event_rsvp as rsvp')
             ->join('resident as resident', 'resident.Resident_ID', '=', 'rsvp.Resident_ID')
             ->join('event as event', 'event.Event_ID', '=', 'rsvp.Event_ID')
-            ->leftJoin('household as household', 'household.Household_Index', '=', 'resident.Household_ID')
+            ->leftJoin('household as household', 'household.Household_Index', '=', 'resident.Household_Index')
             ->select([
                 'rsvp.RSVP_ID',
                 'resident.First_Name',
@@ -156,8 +156,12 @@ class PrototypeEventService
                 ->where('Zone_Purok', trim((string) $payload['purok']))
                 ->pluck('Household_Index');
 
-            if ($householdIds->isNotEmpty()) {
-                $query->whereIn('Household_ID', $householdIds->all());
+            $householdIds = $householdIds instanceof \Illuminate\Support\Collection
+                ? $householdIds->all()
+                : (array) $householdIds;
+
+            if (! empty($householdIds)) {
+                $query->whereIn('Household_Index', $householdIds);
             }
         }
 
@@ -167,11 +171,11 @@ class PrototypeEventService
             'Middle_Name',
             'Last_Name',
             'Contact_Number',
-            'Household_ID',
+            'Household_Index',
         ]);
 
         if (! $resident) {
-            throw new RuntimeException('No resident record matched the submitted details. Please check your name, contact number, or purok.');
+            throw new RuntimeException('No matching resident was found for the provided event registration details.');
         }
 
         $existingRegistration = DB::table('event_rsvp')

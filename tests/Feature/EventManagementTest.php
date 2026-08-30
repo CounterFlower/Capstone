@@ -45,7 +45,7 @@ class EventManagementTest extends TestCase
             'Last_Name' => 'Santos',
             'Date_of_Birth' => '1990-05-15',
             'Contact_Number' => '09171234567',
-            'Household_ID' => 1,
+            'Household_Index' => 1,
             'Is_Verified' => 1,
         ]);
 

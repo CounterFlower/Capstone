@@ -3,19 +3,24 @@
 namespace App\Repositories;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ResidentRepository
 {
     public function getResidentProfiles(): \Illuminate\Support\Collection
     {
+        if (! Schema::hasTable('resident')) {
+            return collect();
+        }
+
         return DB::table('resident')
-            ->leftJoin('household', 'resident.Household_ID', '=', 'household.Household_Index')
+            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
             ->select([
                 'resident.Resident_ID',
                 'resident.First_Name',
                 'resident.Middle_Name',
                 'resident.Last_Name',
-                'resident.Household_ID as Household_Index',
+                'resident.Household_Index as Household_Index',
                 'household.Household_Id',
                 'household.House_Number',
                 'resident.Date_of_Birth',
@@ -32,6 +37,10 @@ class ResidentRepository
 
     public function getPendingDocumentRequests(): \Illuminate\Support\Collection
     {
+        if (! Schema::hasTable('document_request') || ! Schema::hasTable('resident')) {
+            return collect();
+        }
+
         return DB::table('document_request')
             ->join('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
             ->select([
@@ -45,6 +54,43 @@ class ResidentRepository
             ])
             ->where('document_request.Status', 'Pending')
             ->orderByDesc('document_request.Date_Requested')
+            ->get();
+    }
+
+    public function getIncidentCases(): \Illuminate\Support\Collection
+    {
+        if (! Schema::hasTable('incident_blotter') || ! Schema::hasTable('incident_types')) {
+            return collect();
+        }
+
+        $query = DB::table('incident_blotter as ib')
+            ->leftJoin('incident_types as it', 'it.Category_Id', '=', 'ib.Category_Id')
+            ->leftJoin('resident as r', function ($join) {
+                $join->on('r.Resident_ID', '=', 'ib.Complainant_Id')
+                    ->orOn('r.Resident_ID', '=', 'ib.Respondent_Id');
+            });
+
+        if (Schema::hasTable('guest')) {
+            $query->leftJoin('guest as g', 'g.Guest_Id', '=', 'ib.Guest_Id');
+        }
+
+        $reporterExpression = "CONCAT(r.First_Name, ' ', COALESCE(r.Middle_Name, ''), ' ', r.Last_Name)";
+
+        if (Schema::hasTable('guest')) {
+            $reporterExpression = "COALESCE(\n                    CONCAT(r.First_Name, ' ', COALESCE(r.Middle_Name, ''), ' ', r.Last_Name),\n                    CONCAT(g.First_Name, ' ', COALESCE(g.Middle_Name, ''), ' ', g.Last_Name)\n                )";
+        }
+
+        return $query
+            ->select([
+                'ib.Incident_ID as Incident_ID',
+                'it.Category as Category',
+                'ib.Description as Description',
+                'ib.Date_Filed as Date_Filed',
+                'ib.Resolution_Status as Resolution_Status',
+                'ib.Handled_By as Handled_By',
+                DB::raw($reporterExpression.' as Reporter_Name'),
+            ])
+            ->orderByDesc('ib.Date_Filed')
             ->get();
     }
 
@@ -68,8 +114,12 @@ class ResidentRepository
                 ->when(! empty($payload['purok']), fn ($q) => $q->where('Zone_Purok', trim($payload['purok'])))
                 ->pluck('Household_Index');
 
-            if ($householdIndexes->isNotEmpty()) {
-                $query->whereIn('Household_ID', $householdIndexes->all());
+            $householdIndexes = $householdIndexes instanceof \Illuminate\Support\Collection
+                ? $householdIndexes->all()
+                : (array) $householdIndexes;
+
+            if (! empty($householdIndexes)) {
+                $query->whereIn('Household_Index', $householdIndexes);
             }
         }
 
@@ -80,7 +130,7 @@ class ResidentRepository
             'Last_Name',
             'Date_of_Birth',
             'Contact_Number',
-            'Household_ID',
+            'Household_Index',
         ]);
     }
 
@@ -151,7 +201,7 @@ class ResidentRepository
             'Gender' => $payload['gender'] ?? null,
             'Civil_Status' => $payload['civil_status'] ?? null,
             'Contact_Number' => $payload['contact_number'] ?? null,
-            'Household_ID' => $householdIndex,
+            'Household_Index' => $householdIndex,
             'Is_Verified' => 0,
         ]);
     }
@@ -160,7 +210,7 @@ class ResidentRepository
     {
         return DB::table('resident')
             ->where('Resident_ID', $residentId)
-            ->first(['Resident_ID', 'Household_ID']);
+            ->first(['Resident_ID', 'Household_Index']);
     }
 
     public function getHouseholdById(int $householdId): ?object
@@ -193,8 +243,8 @@ class ResidentRepository
             throw new \RuntimeException('No resident matches the supplied resident ID.');
         }
 
-        $currentHousehold = $resident->Household_ID
-            ? $this->getHouseholdByIndex((int) $resident->Household_ID)
+        $currentHousehold = $resident->Household_Index
+            ? $this->getHouseholdByIndex((int) $resident->Household_Index)
             : null;
 
         $matchingAddressHousehold = $this->getAddressHousehold($payload['house_number'], $payload['zone_purok']);
@@ -264,17 +314,17 @@ class ResidentRepository
                 'Gender' => $payload['gender'] ?? null,
                 'Civil_Status' => $payload['civil_status'] ?? null,
                 'Contact_Number' => $payload['contact_number'] ?? null,
-                'Household_ID' => $householdIndex,
+                'Household_Index' => $householdIndex,
             ]);
 
-        if ($resident->Household_ID && (int) $resident->Household_ID !== (int) $householdIndex) {
+        if ($resident->Household_Index && (int) $resident->Household_Index !== (int) $householdIndex) {
             $stillAssigned = DB::table('resident')
-                ->where('Household_ID', $resident->Household_ID)
+                ->where('Household_Index', $resident->Household_Index)
                 ->exists();
 
             if (! $stillAssigned) {
                 DB::table('household')
-                    ->where('Household_Index', $resident->Household_ID)
+                    ->where('Household_Index', $resident->Household_Index)
                     ->delete();
             }
         }
@@ -293,12 +343,12 @@ class ResidentRepository
             ->value('Household_Index');
 
         if ($householdIndex === null) {
-            if (! $resident->Household_ID) {
+            if (! $resident->Household_Index) {
                 throw new \RuntimeException('The resident is not assigned to a household row.');
             }
 
             DB::table('household')
-                ->where('Household_Index', $resident->Household_ID)
+                ->where('Household_Index', $resident->Household_Index)
                 ->update([
                     'Household_Id' => $payload['household_id'],
                     'House_Number' => $payload['house_number'],
@@ -317,16 +367,16 @@ class ResidentRepository
 
         DB::table('resident')
             ->where('Resident_ID', $resident->Resident_ID)
-            ->update(['Household_ID' => $householdIndex]);
+            ->update(['Household_Index' => $householdIndex]);
 
-        if ($resident->Household_ID && (int) $resident->Household_ID !== (int) $householdIndex) {
+        if ($resident->Household_Index && (int) $resident->Household_Index !== (int) $householdIndex) {
             $stillAssigned = DB::table('resident')
-                ->where('Household_ID', $resident->Household_ID)
+                ->where('Household_Index', $resident->Household_Index)
                 ->exists();
 
             if (! $stillAssigned) {
                 DB::table('household')
-                    ->where('Household_Index', $resident->Household_ID)
+                    ->where('Household_Index', $resident->Household_Index)
                     ->delete();
             }
         }
@@ -346,6 +396,16 @@ class ResidentRepository
             ->update([
                 'Status' => 'Approved',
                 'Pickup_Schedule' => now()->setTimezone('Asia/Manila')->addDays(3)->format('Y-m-d H:i:s'),
+            ]);
+    }
+
+    public function reviewIncident(int $incidentId, string $resolutionStatus, int $handledBy): bool
+    {
+        return (bool) DB::table('incident_blotter')
+            ->where('Incident_ID', $incidentId)
+            ->update([
+                'Resolution_Status' => $resolutionStatus,
+                'Handled_By' => $handledBy,
             ]);
     }
 }

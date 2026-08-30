@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Login</title>
+    <title>Register Admin</title>
     <style>
         :root {
             --text: #173024;
@@ -16,9 +16,7 @@
             --danger: #b55343;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -28,19 +26,14 @@
             padding: 20px;
             font-family: "Trebuchet MS", "Segoe UI", sans-serif;
             color: var(--text);
-            background:
-                radial-gradient(circle at top left, rgba(213, 159, 57, 0.16), transparent 24%),
+            background: radial-gradient(circle at top left, rgba(213, 159, 57, 0.16), transparent 24%),
                 linear-gradient(160deg, #f5efdd 0%, #edf3ef 100%);
-        }
-
-        h1, h2, p {
-            margin: 0;
         }
 
         .login-shell {
             width: min(980px, 100%);
             display: grid;
-            grid-template-columns: 1fr 420px;
+            grid-template-columns: 1fr 440px;
             border-radius: 30px;
             overflow: hidden;
             box-shadow: var(--shadow);
@@ -54,14 +47,12 @@
             background: linear-gradient(145deg, var(--hero) 0%, var(--hero-soft) 100%);
         }
 
-        .intro p {
-            margin-top: 14px;
-            line-height: 1.8;
-            color: rgba(246, 242, 231, 0.82);
-        }
-
         .panel {
             padding: 38px;
+        }
+
+        h1, h2, p {
+            margin: 0;
         }
 
         .eyebrow {
@@ -72,9 +63,10 @@
             color: #d59f39;
         }
 
-        .subtext,
-        label {
-            color: var(--muted);
+        .intro p {
+            margin-top: 14px;
+            line-height: 1.8;
+            color: rgba(246, 242, 231, 0.82);
         }
 
         form {
@@ -87,6 +79,7 @@
             display: grid;
             gap: 8px;
             font-weight: 700;
+            color: var(--muted);
         }
 
         input {
@@ -98,8 +91,7 @@
             font: inherit;
         }
 
-        button,
-        .back-link {
+        button, .back-link {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -108,19 +100,18 @@
             border: 0;
             font: inherit;
             font-weight: 700;
-            cursor: pointer;
+            text-decoration: none;
         }
 
         button {
             color: #fffdf5;
             background: linear-gradient(120deg, var(--hero-soft), var(--hero));
+            cursor: pointer;
         }
 
         .back-link {
-            margin-top: 12px;
             background: rgba(23, 48, 36, 0.06);
             color: var(--text);
-            text-decoration: none;
         }
 
         .error-box {
@@ -131,9 +122,7 @@
         }
 
         @media (max-width: 920px) {
-            .login-shell {
-                grid-template-columns: 1fr;
-            }
+            .login-shell { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -141,27 +130,33 @@
     <div class="login-shell">
         <section class="intro">
             <p class="eyebrow">Administrative Access</p>
-            <h1>Barangay Management Admin Login</h1>
-            <p>Use your database-backed admin credentials to access the barangay dashboard.</p>
+            <h1>Create an Admin Account</h1>
+            <p>Register a new administrator record in the live system_user table so the barangay dashboard can authenticate against the database.</p>
         </section>
 
         <section class="panel">
-            <p class="eyebrow">Login</p>
-            <h2>Enter administrator credentials</h2>
+            <p class="eyebrow">Registration</p>
+            <h2>New administrator profile</h2>
 
-            @if (session('status'))
-                <div class="error-box" style="margin-top: 18px; background: rgba(42, 124, 76, 0.12); color: #1f583a;">{{ session('status') }}</div>
+            @if ($errors->any())
+                <div class="error-box" style="margin-top: 18px;">
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
             @endif
 
-            @if ($errors->has('login'))
-                <div class="error-box" style="margin-top: 18px;">{{ $errors->first('login') }}</div>
-            @endif
-
-            <form method="POST" action="{{ route('admin.login.submit') }}">
+            <form method="POST" action="{{ route('admin.register.submit') }}">
                 @csrf
+
                 <label>
                     Username
                     <input type="text" name="username" value="{{ old('username') }}" required>
+                </label>
+
+                <label>
+                    Full Name
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" required>
                 </label>
 
                 <label>
@@ -169,11 +164,16 @@
                     <input type="password" name="password" required>
                 </label>
 
-                <button type="submit">Login to Dashboard</button>
+                <label>
+                    Confirm Password
+                    <input type="password" name="password_confirmation" required>
+                </label>
+
+                <button type="submit">Create Admin Account</button>
             </form>
 
             <div style="margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                <a class="back-link" href="{{ route('admin.register') }}">Create Admin Account</a>
+                <a class="back-link" href="{{ route('admin.login') }}">Back to Login</a>
                 <a class="back-link" href="{{ route('home') }}">Back to Public Site</a>
             </div>
         </section>

@@ -228,62 +228,174 @@
                     <p><strong>KP FORM NO. 7</strong></p>
                 </div>
 
-                <div class="paper-top">
-                    <div class="paper-block">
-                        <div class="line-group">
-                            <label>Complainant/s</label>
-                            <input class="line-input" type="text" placeholder="Enter complainant name">
-                        </div>
-                        <div class="paper-note" style="text-align: center;">-Against-</div>
-                        <div class="line-group">
-                            <label>Respondent/s</label>
-                            <input class="line-input" type="text" placeholder="Enter respondent name">
-                        </div>
-                    </div>
+                <form method="POST" action="{{ route('public.incidents.submit') }}">
+                    @csrf
 
-                    <div class="paper-block">
-                        <div class="line-group">
-                            <label>For:</label>
-                            <input class="line-input" type="text" placeholder="Complaint subject">
+                    <div class="paper-top" style="margin-bottom: 24px;">
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Complainant Type</label>
+                                <select class="line-input" name="reporter_type" id="reporter_type" required>
+                                    <option value="">Select type</option>
+                                    <option value="resident" {{ old('reporter_type') === 'resident' ? 'selected' : '' }}>Resident</option>
+                                    <option value="guest" {{ old('reporter_type') === 'guest' ? 'selected' : '' }}>Guest</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="paper-center">
-                    <h2>COMPLAINT</h2>
-                </div>
-
-                <p class="paper-copy">I/WE hereby complain against above named respondent/s for violating my/our rights and interest in the following manner:</p>
-                <div class="line-group" style="margin-bottom: 20px;">
-                    <textarea class="line-textarea" placeholder="Enter the details of the complaint"></textarea>
-                </div>
-
-                <p class="paper-copy">THEREFORE, I/WE pray that the following relief/s be granted to me/us in accordance with law and / or equity:</p>
-                <div class="line-group" style="margin-bottom: 20px;">
-                    <textarea class="line-textarea" placeholder="Enter requested relief or resolution"></textarea>
-                </div>
-
-                <div class="paper-top" style="margin-top: 8px;">
-                    <div class="line-group">
-                        <label>Made this</label>
-                        <input class="line-input" type="text" placeholder="Day / Month / Year">
+                    <div id="resident_fields" class="paper-top" style="margin-bottom: 16px; display: none;">
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>First Name</label>
+                                <input class="line-input" type="text" name="first_name" value="{{ old('first_name') }}" placeholder="Enter first name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Middle Name</label>
+                                <input class="line-input" type="text" name="middle_name" value="{{ old('middle_name') }}" placeholder="Enter middle name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Last Name</label>
+                                <input class="line-input" type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Birth Date</label>
+                                <input class="line-input" type="date" name="date_of_birth" value="{{ old('date_of_birth') }}">
+                            </div>
+                        </div>
                     </div>
-                    <div class="line-group">
-                        <label>Complainant/s Signature</label>
-                        <input class="line-input" type="text" placeholder="Signature placeholder">
-                    </div>
-                </div>
 
-                <div class="paper-signatures">
-                    <div class="signature-block">
-                        <div class="signature-line"></div>
-                        <div class="signature-caption">Brgy. Secretary / Kwd. On Duty</div>
+                    <div id="guest_fields" class="paper-top" style="margin-bottom: 16px; display: none;">
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>First Name</label>
+                                <input class="line-input" type="text" name="guest_first_name" value="{{ old('guest_first_name') }}" placeholder="Enter first name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Middle Name</label>
+                                <input class="line-input" type="text" name="guest_middle_name" value="{{ old('guest_middle_name') }}" placeholder="Enter middle name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Last Name</label>
+                                <input class="line-input" type="text" name="guest_last_name" value="{{ old('guest_last_name') }}" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Address</label>
+                                <input class="line-input" type="text" name="guest_address" value="{{ old('guest_address') }}" placeholder="Enter complete address">
+                            </div>
+                        </div>
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Contact Number</label>
+                                <input class="line-input" type="text" name="guest_contact_number" value="{{ old('guest_contact_number') }}" placeholder="Enter contact number">
+                            </div>
+                        </div>
                     </div>
-                    <div class="signature-block">
-                        <div class="signature-line"></div>
-                        <div class="signature-caption">Punong Barangay</div>
+
+                    <div class="paper-top">
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Complainant/s</label>
+                                <input class="line-input" type="text" name="complainant_name" value="{{ old('complainant_name') }}" placeholder="Auto-filled from above input" readonly>
+                            </div>
+                            <div class="paper-note" style="text-align: center;">-Against-</div>
+                            <div class="line-group">
+                                <label>Respondent First Name</label>
+                                <input class="line-input" type="text" name="respondent_first_name" value="{{ old('respondent_first_name') }}" placeholder="Enter first name">
+                            </div>
+                            <div class="line-group">
+                                <label>Respondent Middle Name</label>
+                                <input class="line-input" type="text" name="respondent_middle_name" value="{{ old('respondent_middle_name') }}" placeholder="Optional">
+                            </div>
+                            <div class="line-group">
+                                <label>Respondent Last Name</label>
+                                <input class="line-input" type="text" name="respondent_last_name" value="{{ old('respondent_last_name') }}" placeholder="Enter last name">
+                            </div>
+                            <div class="line-group">
+                                <label>Respondent Birth Date</label>
+                                <input class="line-input" type="date" name="respondent_date_of_birth" value="{{ old('respondent_date_of_birth') }}">
+                            </div>
+                        </div>
+
+                        <div class="paper-block">
+                            <div class="line-group">
+                                <label>Complaint Subject</label>
+                                <select class="line-input" name="category_id" required>
+                                    <option value="">Select category</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->Category_Id }}" {{ old('category_id') == $category->Category_Id ? 'selected' : '' }}>
+                                            {{ $category->Category }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="paper-center">
+                        <h2>COMPLAINT</h2>
+                    </div>
+
+                    <p class="paper-copy">I/WE hereby complain against above named respondent/s for violating my/our rights and interest in the following manner:</p>
+                    <div class="line-group" style="margin-bottom: 20px;">
+                        <textarea class="line-textarea" name="complaint_details" placeholder="Enter the details of the complaint" required>{{ old('complaint_details') }}</textarea>
+                    </div>
+
+                    <p class="paper-copy">THEREFORE, I/WE pray that the following relief/s be granted to me/us in accordance with law and / or equity:</p>
+                    <div class="line-group" style="margin-bottom: 20px;">
+                        <textarea class="line-textarea" name="requested_relief" placeholder="Enter requested relief or resolution">{{ old('requested_relief') }}</textarea>
+                    </div>
+
+                    @if (session('status'))
+                        <div class="list-item" style="margin-bottom: 16px; color: #1f583a;">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="list-item" style="margin-bottom: 16px; color: #b55343;">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <div class="paper-top" style="margin-top: 8px;">
+                        <div class="line-group">
+                            <label>Made this</label>
+                            <input class="line-input" type="text" placeholder="Day / Month / Year" readonly>
+                        </div>
+                        <div class="line-group">
+                            <label>Complainant/s Signature</label>
+                            <input class="line-input" type="text" placeholder="Signature placeholder" readonly>
+                        </div>
+                    </div>
+
+                    <div class="paper-signatures">
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-caption">Brgy. Secretary / Kwd. On Duty</div>
+                        </div>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <div class="signature-caption">Punong Barangay</div>
+                        </div>
+                    </div>
+
+                    <div class="hero-actions" style="margin-top: 20px;">
+                        <button type="submit" class="button primary" style="border: 0; cursor: pointer;">Submit Incident Report</button>
+                    </div>
+                </form>
             </article>
 
             <article class="card">
@@ -294,4 +406,85 @@
             </article>
         </div>
     </section>
+
+    <script>
+        const reporterType = document.getElementById('reporter_type');
+        const residentFields = document.getElementById('resident_fields');
+        const guestFields = document.getElementById('guest_fields');
+        const complainantName = document.querySelector('input[name="complainant_name"]');
+        const respondentFirstName = document.querySelector('input[name="respondent_first_name"]');
+        const respondentMiddleName = document.querySelector('input[name="respondent_middle_name"]');
+        const respondentLastName = document.querySelector('input[name="respondent_last_name"]');
+
+        const updateComplainantName = () => {
+            const nameParts = [];
+
+            if (reporterType.value === 'resident') {
+                const first = document.querySelector('input[name="first_name"]')?.value?.trim();
+                const middle = document.querySelector('input[name="middle_name"]')?.value?.trim();
+                const last = document.querySelector('input[name="last_name"]')?.value?.trim();
+
+                if (first) nameParts.push(first);
+                if (middle) nameParts.push(middle);
+                if (last) nameParts.push(last);
+            }
+
+            if (reporterType.value === 'guest') {
+                const first = document.querySelector('input[name="guest_first_name"]')?.value?.trim();
+                const middle = document.querySelector('input[name="guest_middle_name"]')?.value?.trim();
+                const last = document.querySelector('input[name="guest_last_name"]')?.value?.trim();
+
+                if (first) nameParts.push(first);
+                if (middle) nameParts.push(middle);
+                if (last) nameParts.push(last);
+            }
+
+            complainantName.value = nameParts.join(' ');
+        };
+
+        const updateRespondentFields = () => {
+            const respondentNameParts = [];
+            const first = respondentFirstName?.value?.trim();
+            const middle = respondentMiddleName?.value?.trim();
+            const last = respondentLastName?.value?.trim();
+
+            if (first) respondentNameParts.push(first);
+            if (middle) respondentNameParts.push(middle);
+            if (last) respondentNameParts.push(last);
+        };
+
+        const updateFormFields = () => {
+            const type = reporterType.value;
+            residentFields.style.display = type === 'resident' ? 'grid' : 'none';
+            guestFields.style.display = type === 'guest' ? 'grid' : 'none';
+
+            residentFields.querySelectorAll('input').forEach((input) => {
+                if (type !== 'resident') {
+                    input.removeAttribute('required');
+                } else {
+                    input.setAttribute('required', 'required');
+                }
+            });
+
+            guestFields.querySelectorAll('input').forEach((input) => {
+                if (type !== 'guest') {
+                    input.removeAttribute('required');
+                } else {
+                    input.setAttribute('required', 'required');
+                }
+            });
+
+            updateComplainantName();
+        };
+
+        reporterType.addEventListener('change', updateFormFields);
+        document.querySelectorAll('input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="guest_first_name"], input[name="guest_middle_name"], input[name="guest_last_name"], input[name="respondent_first_name"], input[name="respondent_middle_name"], input[name="respondent_last_name"]').forEach((input) => {
+            input.addEventListener('input', () => {
+                updateComplainantName();
+                updateRespondentFields();
+            });
+        });
+
+        updateFormFields();
+    </script>
 @endsection

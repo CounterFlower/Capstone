@@ -1,20 +1,23 @@
+@php
+    use Carbon\Carbon;
+@endphp
+
 @extends('layouts.admin')
 
 @section('content')
     @php
-        $caseRecords = [
-            ['id' => 'IR-014', 'type' => 'Noise Complaint', 'resident' => 'Juan Dela Cruz', 'respondent' => 'Mark Ramos', 'date' => 'May 07, 2026', 'status' => 'Under Review', 'badge' => 'warn'],
-            ['id' => 'IR-013', 'type' => 'Verbal Altercation', 'resident' => 'Liza Mendoza', 'respondent' => 'Joel Mendoza', 'date' => 'May 06, 2026', 'status' => 'For Mediation', 'badge' => 'good'],
-            ['id' => 'IR-012', 'type' => 'Boundary Dispute', 'resident' => 'Maria Santos', 'respondent' => 'Carlos Perez', 'date' => 'May 05, 2026', 'status' => 'Scheduled', 'badge' => 'good'],
-            ['id' => 'IR-011', 'type' => 'Physical Altercation', 'resident' => 'Pedro Ramos', 'respondent' => 'Nestor Cruz', 'date' => 'May 03, 2026', 'status' => 'Escalated', 'badge' => 'alert'],
-            ['id' => 'IR-010', 'type' => 'Property Damage', 'resident' => 'Ana Villanueva', 'respondent' => 'Rico Flores', 'date' => 'May 02, 2026', 'status' => 'Pending Review', 'badge' => 'warn'],
-        ];
-
         $analyticsBlocks = [
             ['label' => 'Document requests completed', 'value' => '78%', 'width' => '78%'],
             ['label' => 'Resident profiles completed', 'value' => '92%', 'width' => '92%'],
             ['label' => 'Cases resolved this month', 'value' => '63%', 'width' => '63%'],
             ['label' => 'Event participation fill rate', 'value' => count($registrations) > 0 ? 'Live' : '0%', 'width' => min(count($registrations) * 12, 100) . '%'],
+        ];
+
+        $badgeMap = [
+            'Pending' => 'warn',
+            'Active' => 'good',
+            'Resolved' => 'good',
+            'Escalated' => 'alert',
         ];
     @endphp
 
@@ -116,29 +119,46 @@
         <section class="panels" id="cases">
             <article class="card">
                 <h2>Case Monitoring</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Sample layout for monitoring reported incidents and complaints from residents.</p>
+                <p class="subtext" style="margin-bottom: 16px;">Live incident reports pulled from the barangay system.</p>
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Case ID</th>
                             <th>Type</th>
-                            <th>Resident</th>
-                            <th>Respondent</th>
+                            <th>Reporter</th>
+                            <th>Complaint Details</th>
                             <th>Date Filed</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($caseRecords as $case)
+                        @forelse ($caseRecords as $case)
                             <tr>
-                                <td>{{ $case['id'] }}</td>
-                                <td>{{ $case['type'] }}</td>
-                                <td>{{ $case['resident'] }}</td>
-                                <td>{{ $case['respondent'] }}</td>
-                                <td>{{ $case['date'] }}</td>
-                                <td><span class="badge {{ $case['badge'] }}">{{ $case['status'] }}</span></td>
+                                <td>{{ $case->Incident_ID }}</td>
+                                <td>{{ $case->Category ?? 'Uncategorized' }}</td>
+                                <td>{{ $case->Reporter_Name ?? 'Unknown' }}</td>
+                                <td>{{ Str::limit($case->Description ?? 'No description provided', 80) }}</td>
+                                <td>{{ $case->Date_Filed ? Carbon::parse($case->Date_Filed)->format('M d, Y') : 'N/A' }}</td>
+                                <td><span class="badge {{ $badgeMap[$case->Resolution_Status ?? 'Pending'] ?? 'warn' }}">{{ $case->Resolution_Status ?? 'Pending' }}</span></td>
+                                <td>
+                                    <form method="POST" action="{{ route('admin.incidents.review') }}" style="display:flex; gap:8px; align-items:center;">
+                                        @csrf
+                                        <input type="hidden" name="incident_id" value="{{ $case->Incident_ID }}">
+                                        <select name="resolution_status" style="padding:8px; border-radius:8px; border:1px solid #d5d8de;">
+                                            @foreach (['Pending', 'Active', 'Resolved', 'Escalated'] as $status)
+                                                <option value="{{ $status }}" {{ ($case->Resolution_Status ?? 'Pending') === $status ? 'selected' : '' }}>{{ $status }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="form-submit" style="padding:8px 12px;">Review</button>
+                                    </form>
+                                </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7">No incident cases found.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </article>
@@ -312,7 +332,7 @@
                                 <td>{{ $request->Resident_ID }}</td>
                                 <td>{{ $request->Document_Type }}</td>
                                 <td>{{ $request->Purpose ?: 'Not specified' }}</td>
-                                <td>{{ \Carbon\Carbon::parse($request->Date_Requested)->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
+                                <td>{{ Carbon::parse($request->Date_Requested)->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
                                 <td><span class="badge warn">{{ $request->Status }}</span></td>
                                 <td>
                                     <form method="POST" action="{{ route('admin.documents.approve') }}">
@@ -405,7 +425,7 @@
                     @forelse ($events as $event)
                         <div class="list-item">
                             <strong>{{ $event->title }}</strong>
-                            {{ $event->date }} at {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}<br>
+                            {{ $event->date }} at {{ Carbon::parse($event->time)->format('g:i A') }}<br>
                             {{ $event->venue }}
                         </div>
                     @empty
