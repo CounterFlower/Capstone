@@ -39,6 +39,13 @@ Route::post('/admin/residents/update', [ResidentController::class, 'update'])->n
 Route::post('/admin/residents/verify', [ResidentController::class, 'verify'])->name('admin.residents.verify');
 Route::post('/admin/document-requests/approve', [ResidentController::class, 'approveDocumentRequest'])->name('admin.documents.approve');
 Route::post('/admin/events', [EventController::class, 'store'])->name('admin.events.store');
-Route::post('/admin/incidents/review', [AdminController::class, 'reviewIncident'])->name('admin.incidents.review');
+Route::get('/admin/events/{event_id}/edit', [EventController::class, 'edit'])->name('admin.events.edit');
+Route::put('/admin/events/{event_id}', [EventController::class, 'update'])->name('admin.events.update');
+Route::delete('/admin/events/{event_id}', [EventController::class, 'destroy'])->name('admin.events.destroy');
+
+// --- Incident Review & Status Update Routes ---
+Route::get('/admin/incidents/{incident_id}/review', [AdminController::class, 'reviewIncident'])->name('admin.incidents.review');
+Route::patch('/admin/incidents/{incident_id}/status', [AdminController::class, 'updateIncidentStatus'])->name('admin.incidents.update-status');
 
 Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+

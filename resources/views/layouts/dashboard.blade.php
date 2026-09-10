@@ -82,6 +82,7 @@
             color: rgba(247, 246, 239, 0.82);
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            display: block;
         }
 
         .nav-link.active {
@@ -282,31 +283,41 @@
                 <p>Barangay operations prototype focused on records, services, analytics, and case monitoring.</p>
             </div>
 
+            @php
+                $currentTab = request()->query('tab', $activeTab ?? 'overview');
+            @endphp
+
             <nav>
-                <a class="nav-link {{ request()->routeIs('dashboard.index') ? 'active' : '' }}" href="{{ route('dashboard.index') }}">
-                    Prototype Hub
-                    <small>Overview of all five layouts</small>
+                <a class="nav-link {{ $currentTab === 'overview' ? 'active' : '' }}" href="{{ route('admin.dashboard', ['tab' => 'overview']) }}">
+                    Overview
+                    <small>System summary and status</small>
                 </a>
-                <a class="nav-link {{ request()->routeIs('dashboard.admin') ? 'active' : '' }}" href="{{ route('dashboard.admin') }}">
-                    Administrative Dashboard
-                    <small>2.1.4 Analytics reporting and decision support</small>
-                </a>
-                <a class="nav-link {{ request()->routeIs('dashboard.documents') ? 'active' : '' }}" href="{{ route('dashboard.documents') }}">
-                    Document Request
-                    <small>2.1.1 Manual, paper-based workflows</small>
-                </a>
-                <a class="nav-link {{ request()->routeIs('dashboard.residents') ? 'active' : '' }}" href="{{ route('dashboard.residents') }}">
-                    Resident Profiles
-                    <small>2.1.2 Centralized records management</small>
-                </a>
-                <a class="nav-link {{ request()->routeIs('dashboard.incidents') ? 'active' : '' }}" href="{{ route('dashboard.incidents') }}">
+                <a class="nav-link {{ $currentTab === 'cases' ? 'active' : '' }}" href="{{ route('admin.dashboard', ['tab' => 'cases']) }}">
                     Incident Monitoring
-                    <small>2.1.5 Incident reporting and case monitoring</small>
+                    <small>Incident reporting and case monitoring</small>
                 </a>
-                <a class="nav-link {{ request()->routeIs('dashboard.announcements') ? 'active' : '' }}" href="{{ route('dashboard.announcements') }}">
-                    Announcements Board
-                    <small>2.1.3 Communication and public services</small>
+                <a class="nav-link {{ $currentTab === 'documents' ? 'active' : '' }}" href="{{ route('admin.dashboard', ['tab' => 'documents']) }}">
+                    Document Requests
+                    <small>Clearances and certifications</small>
                 </a>
+                <a class="nav-link {{ $currentTab === 'residents' ? 'active' : '' }}" href="{{ route('admin.dashboard', ['tab' => 'residents']) }}">
+                    Resident Profiles
+                    <small>Centralized records management</small>
+                </a>
+                <a class="nav-link {{ $currentTab === 'events' ? 'active' : '' }}" href="{{ route('admin.dashboard', ['tab' => 'events']) }}">
+                    Events & Announcements
+                    <small>Community schedules and notices</small>
+                </a>
+                
+                <form method="POST" action="{{ route('admin.logout') }}" style="margin-top: 16px;">
+                    @csrf
+                    <button type="submit" style="width: 100%; text-align: left; background: transparent; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer;">
+                        <span class="nav-link" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2);">
+                            Log Out
+                            <small style="color: rgba(252, 165, 165, 0.75);">End administrative session</small>
+                        </span>
+                    </button>
+                </form>
             </nav>
         </aside>
 

@@ -33,6 +33,18 @@ class PublicPageController extends Controller
 
     public function submitIncidentReport(Request $request)
     {
+        // 1. Capture coordinate values regardless of casing from the incoming request
+        $rawLat = $request->input('Latitude', $request->input('latitude'));
+        $rawLng = $request->input('Longitude', $request->input('longitude'));
+
+        // Normalize request inputs so validation succeeds regardless of casing
+        $request->merge([
+            'Latitude'  => $rawLat,
+            'Longitude' => $rawLng,
+            'latitude'  => $rawLat,
+            'longitude' => $rawLng,
+        ]);
+
         $payload = $request->validate([
             'reporter_type' => ['required', 'in:resident,guest'],
             'first_name' => ['required_if:reporter_type,resident', 'nullable', 'string', 'max:100'],
@@ -52,6 +64,12 @@ class PublicPageController extends Controller
             'category_id' => ['required', 'integer', 'exists:incident_types,Category_Id'],
             'complaint_details' => ['required', 'string'],
             'requested_relief' => ['nullable', 'string'],
+            // Validate coordinates
+            'Latitude' => ['required', 'numeric', 'between:-90,90'],
+            'Longitude' => ['required', 'numeric', 'between:-180,180'],
+        ], [
+            'Latitude.required' => 'Please select the incident location on the map.',
+            'Longitude.required' => 'Please select the incident location on the map.',
         ]);
 
         $respondentName = trim(implode(' ', array_filter([
@@ -77,6 +95,7 @@ class PublicPageController extends Controller
             ->when(! empty($payload['date_of_birth']), fn ($query) => $query->whereDate('Date_of_Birth', $payload['date_of_birth']))
             ->first(['Resident_ID']);
 
+        // 2. Dispatch payload with explicitly cast float coordinates
         $this->residentService->submitIncidentReport([
             'reporter_type' => $payload['reporter_type'],
             'complainant_name' => $payload['complainant_name'],
@@ -98,6 +117,9 @@ class PublicPageController extends Controller
             'guest_contact_number' => $payload['guest_contact_number'] ?? null,
             'complainant_resident_id' => $complainant?->Resident_ID,
             'respondent_resident_id' => $respondent->Resident_ID,
+            // Guaranteed float coordinates for ResidentService
+            'Latitude' => (float) $rawLat,
+            'Longitude' => (float) $rawLng,
         ]);
 
         return redirect()->route('public.incidents')->with('status', 'Incident report submitted successfully.');

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bagumbayan, Daraga - Puroks & Landmarks</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+    #map {
+      height: 650px;
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    
+    /* Comprehensive Legend Box */
+    .custom-legend {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      line-height: 22px;
+      font-size: 12px;
+      color: #333;
+      max-width: 200px;
+    }
+    .custom-legend strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 2px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      margin-right: 8px;
+      border-radius: 3px;
+      border: 1px solid #666;
+    }
+    .legend-icon {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      text-align: center;
+      margin-right: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 1. Initialize Map
+    const map = L.map('map').setView([13.1420, 123.7170], 16);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 2. Purok Polygons & Distinct Colors
+    const purokColors = {
+      'Purok 1': '#3388ff',
+      'Purok 2': '#28a745',
+      'Purok 3': '#ff9800',
+      'Purok 4': '#9c27b0'
+    };
+
+    const puroksData = {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": { "name": "Purok 1", "population": 850 },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[123.7145, 13.1457], [123.7169, 13.1458], [123.7164, 13.1425], [123.7148, 13.1427], [123.7145, 13.1457]]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Purok 2", "population": 920 },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[123.7169, 13.1458], [123.7199, 13.1423], [123.7185, 13.1415], [123.7164, 13.1425], [123.7169, 13.1458]]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Purok 3", "population": 810 },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[123.7148, 13.1427], [123.7164, 13.1425], [123.7158, 13.1386], [123.7145, 13.1394], [123.7148, 13.1427]]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Purok 4", "population": 883 },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[123.7164, 13.1425], [123.7199, 13.1423], [123.7195, 13.1385], [123.7158, 13.1386], [123.7164, 13.1425]]]
+          }
+        }
+      ]
+    };
+
+    // Render Puroks Layer
+    const purokLayer = L.geoJSON(puroksData, {
+      style: feature => ({
+        fillColor: purokColors[feature.properties.name] || '#999',
+        weight: 2,
+        opacity: 1,
+        color: '#ffffff',
+        fillOpacity: 0.55
+      }),
+      onEachFeature: (feature, layer) => {
+        layer.bindPopup(`<b>${feature.properties.name}</b><br>Est. Population: ${feature.properties.population}`);
+        
+        // Hover interaction
+        layer.on({
+          mouseover: e => {
+            e.target.setStyle({ weight: 3, color: '#222', fillOpacity: 0.8 });
+            e.target.bringToFront();
+          },
+          mouseout: e => {
+            purokLayer.resetStyle(e.target);
+          }
+        });
+      }
+    }).addTo(map);
+
+    // 3. Landmark Points (Coordinates in Bagumbayan)
+    const landmarks = [
+      { name: "Barangay Hall", type: "hall", coords: [13.1425, 123.7165], icon: "🏛️" },
+      { name: "Bagumbayan Elementary School", type: "school", coords: [13.1440, 123.7155], icon: "🏫" },
+      { name: "Barangay Gymnasium", type: "gym", coords: [13.1422, 123.7168], icon: "🏀" },
+      { name: "Child Development Center (Daycare)", type: "daycare", coords: [13.1418, 123.7162], icon: "👶" }
+    ];
+
+    const landmarkLayer = L.featureGroup();
+
+    landmarks.forEach(item => {
+      // Create lightweight HTML marker with emoji/symbol
+      const customIcon = L.divIcon({
+        className: 'landmark-marker',
+        html: `<div style="font-size: 20px; text-shadow: 0 0 4px #fff, 0 0 8px #fff;">${item.icon}</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const marker = L.marker(item.coords, { icon: customIcon })
+        .bindPopup(`<b>${item.name}</b><br>Landmark: ${item.icon}`);
+      
+      landmarkLayer.addLayer(marker);
+    });
+
+    landmarkLayer.addTo(map);
+
+    // 4. Layer Toggle Controller (Top Right)
+    const overlayMaps = {
+      "Purok Zones": purokLayer,
+      "Key Landmarks": landmarkLayer
+    };
+    L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+
+    // 5. Unified Custom Legend (Bottom Right)
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function () {
+      const div = L.DomUtil.create('div', 'custom-legend');
+
+      // Purok Boundaries Section
+      div.innerHTML = `<strong>Purok Zones</strong>`;
+      for (const [name, color] of Object.entries(purokColors)) {
+        div.innerHTML += `
+          <div class="legend-item">
+            <span class="legend-color" style="background: ${color};"></span>
+            ${name}
+          </div>`;
+      }
+
+      // Landmarks Section
+      div.innerHTML += `<strong style="margin-top: 10px;">Landmarks</strong>`;
+      landmarks.forEach(l => {
+        div.innerHTML += `
+          <div class="legend-item">
+            <span class="legend-icon">${l.icon}</span>
+            ${l.name.replace("Bagumbayan ", "")}
+          </div>`;
+      });
+
+      return div;
+    };
+
+    legend.addTo(map);
+  </script>
+</body>
+</html>

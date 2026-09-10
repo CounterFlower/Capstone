@@ -75,7 +75,10 @@ class ResidentRepository
         $reporterExpression = "CONCAT(complainant.First_Name, ' ', COALESCE(complainant.Middle_Name, ''), ' ', complainant.Last_Name)";
 
         if (Schema::hasTable('guest')) {
-            $reporterExpression = "COALESCE(\n                    CONCAT(complainant.First_Name, ' ', COALESCE(complainant.Middle_Name, ''), ' ', complainant.Last_Name),\n                    CONCAT(g.First_Name, ' ', COALESCE(g.Middle_Name, ''), ' ', g.Last_Name)\n                )";
+            $reporterExpression = "COALESCE(
+                    CONCAT(complainant.First_Name, ' ', COALESCE(complainant.Middle_Name, ''), ' ', complainant.Last_Name),
+                    CONCAT(g.First_Name, ' ', COALESCE(g.Middle_Name, ''), ' ', g.Last_Name)
+                )";
         }
 
         return $query
@@ -86,6 +89,8 @@ class ResidentRepository
                 'ib.Date_Filed as Date_Filed',
                 'ib.Resolution_Status as Resolution_Status',
                 'ib.Handled_By as Handled_By',
+                'ib.Latitude as Latitude',     // Selected for Leaflet map pin placement
+                'ib.Longitude as Longitude',   // Selected for Leaflet map pin placement
                 DB::raw($reporterExpression.' as Reporter_Name'),
             ])
             ->orderByDesc('ib.Date_Filed')

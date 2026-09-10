@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\ResidentRepository;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ResidentService
@@ -94,7 +95,7 @@ class ResidentService
             trim($middleName.' '.$lastName),
         ], fn ($value) => $value !== '')));
 
-        $query = \Illuminate\Support\Facades\DB::table('resident')
+        $query = DB::table('resident')
             ->where(function ($q) use ($candidateNames, $firstName, $middleName, $lastName) {
                 $q->where(function ($inner) use ($firstName, $lastName, $middleName) {
                     $inner->whereRaw('TRIM(First_Name) = ?', [$firstName])
@@ -122,19 +123,35 @@ class ResidentService
     {
         $complainantResidentId = $payload['complainant_resident_id'] ?? null;
         $respondentResidentId = $payload['respondent_resident_id'] ?? null;
+        $guestId = null;
 
-        \Illuminate\Support\Facades\DB::table('incident_blotter')->insert([
+        // If the report was submitted by a guest, create or locate the guest record
+        if (($payload['reporter_type'] ?? '') === 'guest') {
+            $guestId = DB::table('guest')->insertGetId([
+                'First_Name' => $payload['complainant_first_name'] ?? null,
+                'Middle_Name' => $payload['complainant_middle_name'] ?? null,
+                'Last_Name' => $payload['complainant_last_name'] ?? null,
+                'Contact_Number' => $payload['guest_contact_number'] ?? null,
+                'Address' => $payload['guest_address'] ?? null,
+            ]);
+        }
+
+        // Pull coordinate values irrespective of input casing
+        $latitude = $payload['Latitude'] ?? $payload['latitude'] ?? null;
+        $longitude = $payload['Longitude'] ?? $payload['longitude'] ?? null;
+
+        DB::table('incident_blotter')->insert([
             'Complainant_Id' => $complainantResidentId,
             'Respondent_Id' => $respondentResidentId,
-            'Guest_Id' => null,
+            'Guest_Id' => $guestId,
             'Category_Id' => $payload['category_id'],
             'Description' => $payload['complaint_details'],
             'Requested_Relief' => $payload['requested_relief'] ?? null,
             'Date_Reported' => now()->setTimezone('Asia/Manila')->format('Y-m-d H:i:s'),
             'Date_Filed' => now()->setTimezone('Asia/Manila')->format('Y-m-d H:i:s'),
             'Resolution_Status' => 'Pending',
-            'Latitude' => null,
-            'Longitude' => null,
+            'Latitude' => $latitude !== null ? (float) $latitude : null,
+            'Longitude' => $longitude !== null ? (float) $longitude : null,
             'Handled_By' => null,
         ]);
     }

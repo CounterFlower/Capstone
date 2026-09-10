@@ -30,3 +30,26 @@ return new class extends Migration
         Schema::dropIfExists('event');
     }
 };
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('event', function (Blueprint $table) {
+            $table->dateTime('End_Date')->nullable()->after('Event_Date');
+            $table->string('Cover_Image')->nullable()->after('Summary');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('event', function (Blueprint $table) {
+            $table->dropColumn(['End_Date', 'Cover_Image']);
+        });
+    }
+};

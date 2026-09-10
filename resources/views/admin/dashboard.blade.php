@@ -39,6 +39,7 @@
         <button type="button" class="tab" data-tab-target="analytics">Analytics<small>Barangay statistics and reporting</small></button>
     </section>
 
+    <!-- OVERVIEW TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'overview' ? 'active' : '' }}" data-tab-panel="overview">
         <section class="stats" id="overview">
             <article class="stat">
@@ -115,11 +116,40 @@
         </section>
     </section>
 
+    <!-- CASES TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'cases' ? 'active' : '' }}" data-tab-panel="cases">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+        <script src="{{ asset('js/barangay-map-data.js') }}"></script>
+
+        <article class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <h2 style="margin: 0;">Geographic Incident Distribution</h2>
+                    <p class="subtext" style="margin: 4px 0 0 0;">Visualized incident pins across Barangay Bagumbayan puroks.</p>
+                </div>
+                <div style="display: flex; gap: 10px; font-size: 0.75rem; flex-wrap: wrap;">
+                    <span style="display: inline-flex; align-items: center;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #eab308; margin-right: 5px;"></span> Pending</span>
+                    <span style="display: inline-flex; align-items: center;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; margin-right: 5px;"></span> Active / Review</span>
+                    <span style="display: inline-flex; align-items: center;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #dc2626; margin-right: 5px;"></span> Escalated</span>
+                    <span style="display: inline-flex; align-items: center;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 5px;"></span> Resolved</span>
+                </div>
+            </div>
+            <div id="cases-incident-map" style="width: 100%; height: 360px; border-radius: 12px; border: 1px solid #d5d8de; z-index: 0;"></div>
+        </article>
+
         <section class="panels" id="cases">
             <article class="card">
-                <h2>Case Monitoring</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Live incident reports pulled from the barangay system.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h2 style="margin: 0;">Case Monitoring</h2>
+                        <p class="subtext">Live incident reports pulled from the barangay system. Status can only be modified inside the case review page.</p>
+                    </div>
+                </div>
+
                 <table class="table">
                     <thead>
                         <tr>
@@ -129,34 +159,31 @@
                             <th>Complaint Details</th>
                             <th>Date Filed</th>
                             <th>Status</th>
-                            <th>Action</th>
+                            <th style="text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($caseRecords as $case)
                             <tr>
-                                <td>{{ $case->Incident_ID }}</td>
+                                <td><strong>#{{ $case->Incident_ID }}</strong></td>
                                 <td>{{ $case->Category ?? 'Uncategorized' }}</td>
                                 <td>{{ $case->Reporter_Name ?? 'Unknown' }}</td>
-                                <td>{{ Str::limit($case->Description ?? 'No description provided', 80) }}</td>
-                                <td>{{ $case->Date_Filed ? Carbon::parse($case->Date_Filed)->format('M d, Y') : 'N/A' }}</td>
-                                <td><span class="badge {{ $badgeMap[$case->Resolution_Status ?? 'Pending'] ?? 'warn' }}">{{ $case->Resolution_Status ?? 'Pending' }}</span></td>
+                                <td>{{ Str::limit($case->Description ?? ($case->complaint_details ?? 'No description provided'), 80) }}</td>
+                                <td>{{ $case->Date_Filed ? \Carbon\Carbon::parse($case->Date_Filed)->format('M d, Y') : ($case->created_at ? $case->created_at->format('M d, Y') : 'N/A') }}</td>
                                 <td>
-                                    <form method="POST" action="{{ route('admin.incidents.review') }}" style="display:flex; gap:8px; align-items:center;">
-                                        @csrf
-                                        <input type="hidden" name="incident_id" value="{{ $case->Incident_ID }}">
-                                        <select name="resolution_status" style="padding:8px; border-radius:8px; border:1px solid #d5d8de;">
-                                            @foreach (['Pending', 'Active', 'Resolved', 'Escalated'] as $status)
-                                                <option value="{{ $status }}" {{ ($case->Resolution_Status ?? 'Pending') === $status ? 'selected' : '' }}>{{ $status }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="form-submit" style="padding:8px 12px;">Review</button>
-                                    </form>
+                                    <span class="badge {{ $badgeMap[$case->Resolution_Status ?? $case->status ?? 'Pending'] ?? 'warn' }}">
+                                        {{ $case->Resolution_Status ?? $case->status ?? 'Pending' }}
+                                    </span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <a href="{{ route('admin.incidents.review', $case->Incident_ID) }}" class="button primary" style="display: inline-block; padding: 6px 14px; text-decoration: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                                        Review
+                                    </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7">No incident cases found.</td>
+                                <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">No incident cases found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -173,8 +200,112 @@
                 </div>
             </article>
         </section>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const geo = window.BagumbayanGeoData;
+            const defaultCenter = (geo && geo.center) ? geo.center : [13.142648, 123.716538];
+            const defaultBounds = (geo && geo.bounds) ? geo.bounds : [[13.139103, 123.713817], [13.146194, 123.719259]];
+
+            const map = L.map('cases-incident-map').fitBounds(defaultBounds, { padding: [20, 20] });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            if (geo && geo.puroks) {
+                geo.puroks.forEach(function (purok) {
+                    L.polygon(purok.coords, {
+                        color: purok.color,
+                        weight: 1.5,
+                        fillOpacity: 0.12,
+                        dashArray: '3, 4'
+                    }).bindTooltip(purok.name, { sticky: true }).addTo(map);
+                });
+            }
+
+            if (geo && geo.landmarks) {
+                geo.landmarks.forEach(function (landmark) {
+                    L.circleMarker(landmark.coords, {
+                        radius: 4,
+                        fillColor: "#0f172a",
+                        color: "#ffffff",
+                        weight: 1.5,
+                        fillOpacity: 0.9
+                    }).bindTooltip(landmark.name, { direction: 'top' }).addTo(map);
+                });
+            }
+
+            const clusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 35,
+                spiderfyOnMaxZoom: true
+            });
+
+            const cases = @json($caseRecords ?? []);
+
+            const statusColorMap = {
+                'Pending': '#eab308',
+                'Active': '#3b82f6',
+                'Under Review': '#3b82f6',
+                'Under Investigation': '#3b82f6',
+                'Escalated': '#dc2626',
+                'Resolved': '#22c55e'
+            };
+
+            if (Array.isArray(cases)) {
+                cases.forEach(function (c) {
+                    const lat = parseFloat(c.latitude || c.Latitude);
+                    const lng = parseFloat(c.longitude || c.Longitude);
+
+                    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                        return;
+                    }
+
+                    const currentStatus = c.Resolution_Status || c.status || 'Pending';
+                    const markerColor = statusColorMap[currentStatus] || '#64748b';
+
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 7,
+                        fillColor: markerColor,
+                        color: '#ffffff',
+                        weight: 2,
+                        fillOpacity: 0.95
+                    });
+
+                    const caseId = c.Incident_ID || c.id;
+                    const caseCategory = c.Category || 'Complaint';
+                    const reviewUrl = "{{ url('admin/incidents') }}/" + caseId + "/review";
+
+                    const popupContent = `
+                        <div style="font-size: 12px; line-height: 1.4; min-width: 140px;">
+                            <strong style="color:#0f172a;">#${caseId}</strong> - ${caseCategory}<br>
+                            Status: <strong style="color:${markerColor};">${currentStatus}</strong><br>
+                            <div style="margin-top: 6px;">
+                                <a href="${reviewUrl}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Open Review</a>
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    clusterGroup.addLayer(marker);
+                });
+            }
+
+            map.addLayer(clusterGroup);
+
+            const tabTrigger = document.querySelector('[data-tab-target="cases"]');
+            if (tabTrigger) {
+                tabTrigger.addEventListener('click', function () {
+                    setTimeout(function () { map.invalidateSize(); }, 200);
+                });
+            }
+            setTimeout(function () { map.invalidateSize(); }, 250);
+        });
+        </script>
     </section>
 
+    <!-- RESIDENTS TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'residents' ? 'active' : '' }}" data-tab-panel="residents">
         <section class="panels" id="residents">
             <article class="card resident-table-card">
@@ -187,52 +318,52 @@
                 @endif
                 <div class="table-wrap">
                     <table class="table resident-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Resident ID</th>
-                            <th>Household ID</th>
-                            <th>Purok</th>
-                            <th>Date of Birth</th>
-                            <th>Place of Birth</th>
-                            <th>Gender</th>
-                            <th>Civil Status</th>
-                            <th>Contact</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($residentProfiles as $resident)
+                        <thead>
                             <tr>
-                                <td>{{ $resident->First_Name }} {{ $resident->Middle_Name ? $resident->Middle_Name.' ' : '' }}{{ $resident->Last_Name }}</td>
-                                <td>{{ $resident->Resident_ID }}</td>
-                                <td>{{ $resident->Household_Id ?? 'Pending' }}</td>
-                                <td>{{ $resident->Zone_Purok ?? 'Not assigned' }}</td>
-                                <td>{{ $resident->Date_of_Birth ?? 'Not provided' }}</td>
-                                <td>{{ $resident->Place_of_Birth ?? 'Not provided' }}</td>
-                                <td>{{ $resident->Gender ?? 'Not provided' }}</td>
-                                <td>{{ $resident->Civil_Status ?? 'Not provided' }}</td>
-                                <td>{{ $resident->Contact_Number ?? 'Not provided' }}</td>
-                                <td><span class="badge {{ $resident->Is_Verified ? 'good' : 'warn' }}">{{ $resident->Is_Verified ? 'Verified' : 'Pending' }}</span></td>
-                                <td class="resident-actions">
-                                    <button type="button" class="form-submit resident-edit" data-resident-id="{{ $resident->Resident_ID }}" data-first-name="{{ $resident->First_Name }}" data-middle-name="{{ $resident->Middle_Name }}" data-last-name="{{ $resident->Last_Name }}" data-date-of-birth="{{ $resident->Date_of_Birth }}" data-place-of-birth="{{ $resident->Place_of_Birth }}" data-gender="{{ $resident->Gender }}" data-civil-status="{{ $resident->Civil_Status }}" data-contact-number="{{ $resident->Contact_Number }}" data-household-id="{{ $resident->Household_Id }}" data-house-number="{{ $resident->House_Number }}" data-zone-purok="{{ $resident->Zone_Purok }}">Edit</button>
-                                    <form method="POST" action="{{ route('admin.residents.verify') }}">
-                                        @csrf
-                                        <input type="hidden" name="active_tab" value="residents">
-                                        <input type="hidden" name="resident_id" value="{{ $resident->Resident_ID }}">
-                                        <input type="hidden" name="is_verified" value="{{ $resident->Is_Verified ? 0 : 1 }}">
-                                        <button type="submit" class="form-submit">{{ $resident->Is_Verified ? 'Set pending' : 'Verify' }}</button>
-                                    </form>
-                                </td>
+                                <th>Name</th>
+                                <th>Resident ID</th>
+                                <th>Household ID</th>
+                                <th>Purok</th>
+                                <th>Date of Birth</th>
+                                <th>Place of Birth</th>
+                                <th>Gender</th>
+                                <th>Civil Status</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
-                        @endforeach
-                        @if ($residentProfiles->isEmpty())
-                            <tr>
-                                <td colspan="11">No resident profiles found.</td>
-                            </tr>
-                        @endif
-                    </tbody>
+                        </thead>
+                        <tbody>
+                            @foreach ($residentProfiles as $resident)
+                                <tr>
+                                    <td>{{ $resident->First_Name }} {{ $resident->Middle_Name ? $resident->Middle_Name.' ' : '' }}{{ $resident->Last_Name }}</td>
+                                    <td>{{ $resident->Resident_ID }}</td>
+                                    <td>{{ $resident->Household_Id ?? 'Pending' }}</td>
+                                    <td>{{ $resident->Zone_Purok ?? 'Not assigned' }}</td>
+                                    <td>{{ $resident->Date_of_Birth ?? 'Not provided' }}</td>
+                                    <td>{{ $resident->Place_of_Birth ?? 'Not provided' }}</td>
+                                    <td>{{ $resident->Gender ?? 'Not provided' }}</td>
+                                    <td>{{ $resident->Civil_Status ?? 'Not provided' }}</td>
+                                    <td>{{ $resident->Contact_Number ?? 'Not provided' }}</td>
+                                    <td><span class="badge {{ $resident->Is_Verified ? 'good' : 'warn' }}">{{ $resident->Is_Verified ? 'Verified' : 'Pending' }}</span></td>
+                                    <td class="resident-actions">
+                                        <button type="button" class="form-submit resident-edit" data-resident-id="{{ $resident->Resident_ID }}" data-first-name="{{ $resident->First_Name }}" data-middle-name="{{ $resident->Middle_Name }}" data-last-name="{{ $resident->Last_Name }}" data-date-of-birth="{{ $resident->Date_of_Birth }}" data-place-of-birth="{{ $resident->Place_of_Birth }}" data-gender="{{ $resident->Gender }}" data-civil-status="{{ $resident->Civil_Status }}" data-contact-number="{{ $resident->Contact_Number }}" data-household-id="{{ $resident->Household_Id }}" data-house-number="{{ $resident->House_Number }}" data-zone-purok="{{ $resident->Zone_Purok }}">Edit</button>
+                                        <form method="POST" action="{{ route('admin.residents.verify') }}">
+                                            @csrf
+                                            <input type="hidden" name="active_tab" value="residents">
+                                            <input type="hidden" name="resident_id" value="{{ $resident->Resident_ID }}">
+                                            <input type="hidden" name="is_verified" value="{{ $resident->Is_Verified ? 0 : 1 }}">
+                                            <button type="submit" class="form-submit">{{ $resident->Is_Verified ? 'Set pending' : 'Verify' }}</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            @if ($residentProfiles->isEmpty())
+                                <tr>
+                                    <td colspan="11">No resident profiles found.</td>
+                                </tr>
+                            @endif
+                        </tbody>
                     </table>
                 </div>
             </article>
@@ -306,6 +437,7 @@
         </section>
     </section>
 
+    <!-- REQUESTS TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'requests' ? 'active' : '' }}" data-tab-panel="requests">
         <section class="panels" id="requests">
             <article class="card">
@@ -363,31 +495,110 @@
         </section>
     </section>
 
+    <!-- EVENTS TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'events' ? 'active' : '' }}" data-tab-panel="events">
         <section class="panels">
+            <!-- Create Event Card -->
             <article class="card">
-                <h2>Create Event</h2>
+                <h2>Schedule New Activity</h2>
                 @if (session('status'))
                     <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
                 @endif
-                <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}">
+                <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="active_tab" value="events">
                     <div class="form-grid">
                         <label class="form-field">Event title<input name="title" value="{{ old('title') }}" placeholder="e.g. Barangay Clean-up Drive" required></label>
-                        <label class="form-field">Event date<input type="date" name="date" value="{{ old('date') }}" required></label>
-                        <label class="form-field">Event time<input type="time" name="time" value="{{ old('time') }}" required></label>
                         <label class="form-field">Venue<input name="venue" value="{{ old('venue') }}" placeholder="e.g. Covered Court" required></label>
-                        <label class="form-field">Available slots<input type="number" name="available_slots" min="1" value="{{ old('available_slots') }}" placeholder="e.g. 50"></label>
+                        <label class="form-field">Start date<input type="date" name="date" value="{{ old('date') }}" required></label>
+                        <label class="form-field">Start time<input type="time" name="time" value="{{ old('time') }}" required></label>
+                        <label class="form-field">End date <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="date" name="end_date" value="{{ old('end_date') }}"></label>
+                        <label class="form-field">End time <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="time" name="end_time" value="{{ old('end_time') }}"></label>
+                        <label class="form-field">Available slots<input type="number" name="available_slots" min="1" value="{{ old('available_slots', 50) }}" placeholder="e.g. 50" required></label>
+                        <label class="form-field">Cover image <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="file" name="cover_image" accept="image/*"></label>
                     </div>
-                    <label class="form-field" style="margin-top: 16px; display: block;">Summary<textarea name="summary" rows="4" placeholder="Brief event description">{{ old('summary') }}</textarea></label>
+                    <label class="form-field" style="margin-top: 16px; display: block;">Summary<textarea name="summary" rows="3" placeholder="Brief event description">{{ old('summary') }}</textarea></label>
                     @if ($errors->any())
                         <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
                     @endif
-                    <button type="submit" class="form-submit" style="margin-top: 16px;">Save event</button>
+                    <button type="submit" class="form-submit" style="margin-top: 16px;">Save & Publish Event</button>
                 </form>
             </article>
 
+            <!-- Scheduled Activities Table with Live Slots & Actions -->
+            <article class="card">
+                <h2>Scheduled Activities</h2>
+                <p class="subtext" style="margin-bottom: 16px;">Scheduled barangay activities and live registration counts.</p>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Event ID</th>
+                                <th>Title</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Venue</th>
+                                <th style="text-align: center;">Slots Filled</th>
+                                <th style="text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($events as $event)
+                                @php
+                                    $eventId = $event->Event_ID ?? $event->id ?? null;
+                                    $title = $event->Event_Name ?? $event->title ?? 'Untitled Event';
+                                    $venue = $event->Location ?? $event->venue ?? 'TBA';
+                                    $capacity = (int)($event->Available_Slots ?? $event->available_slots ?? 0);
+                                    $registered = (int)($event->registered_count ?? 0);
+                                    
+                                    // Format Start
+                                    $startDate = $event->Event_Date ? Carbon::parse($event->Event_Date)->format('M d, Y') : ($event->date ?? 'N/A');
+                                    $startTime = $event->Event_Date ? Carbon::parse($event->Event_Date)->format('g:i A') : ($event->time ? Carbon::parse($event->time)->format('g:i A') : '');
+                                    
+                                    // Format End
+                                    $endDate = !empty($event->End_Date) ? Carbon::parse($event->End_Date)->format('M d, Y') : (!empty($event->end_date) ? Carbon::parse($event->end_date)->format('M d, Y') : null);
+                                    $endTime = !empty($event->End_Date) ? Carbon::parse($event->End_Date)->format('g:i A') : (!empty($event->end_time) ? Carbon::parse($event->end_time)->format('g:i A') : null);
+
+                                    $isFull = $capacity > 0 && $registered >= $capacity;
+                                @endphp
+                                <tr>
+                                    <td><strong>#EV-{{ str_pad($eventId, 3, '0', STR_PAD_LEFT) }}</strong></td>
+                                    <td><strong>{{ $title }}</strong></td>
+                                    <td>{{ $startDate }} {{ $startTime ? 'at '.$startTime : '' }}</td>
+                                    <td>{{ $endDate ? $endDate . ($endTime ? ' at '.$endTime : '') : ($endTime ? 'Until '.$endTime : '—') }}</td>
+                                    <td>{{ $venue }}</td>
+                                    <td style="text-align: center;">
+                                        <span class="badge {{ $isFull ? 'alert' : 'good' }}">
+                                            {{ $registered }} / {{ $capacity }}
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <div style="display: inline-flex; gap: 8px;">
+                                            <a href="{{ route('admin.events.edit', $eventId) }}" class="button secondary" style="padding: 6px 12px; font-size: 0.78rem;">
+                                                Edit
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.events.destroy', $eventId) }}" onsubmit="return confirm('Delete this event?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="active_tab" value="events">
+                                                <button type="submit" class="form-submit" style="padding: 6px 12px; background: #b45142; color: #fff; font-size: 0.78rem;">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--muted); padding: 20px;">No events scheduled yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <!-- Event Sign-ups Log -->
             <article class="card">
                 <h2>Event Registration Summary</h2>
                 <p class="subtext" style="margin-bottom: 16px;">Residents who signed up for barangay activities from the public event page.</p>
@@ -418,24 +629,10 @@
                     </tbody>
                 </table>
             </article>
-
-            <article class="card">
-                <h2>Scheduled Activities</h2>
-                <div class="list">
-                    @forelse ($events as $event)
-                        <div class="list-item">
-                            <strong>{{ $event->title }}</strong>
-                            {{ $event->date }} at {{ Carbon::parse($event->time)->format('g:i A') }}<br>
-                            {{ $event->venue }}
-                        </div>
-                    @empty
-                        <div class="list-item">No events created yet.</div>
-                    @endforelse
-                </div>
-            </article>
         </section>
     </section>
 
+    <!-- ANALYTICS TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'analytics' ? 'active' : '' }}" data-tab-panel="analytics">
         <section class="grid" id="analytics">
             <article class="card">
@@ -447,8 +644,6 @@
                     </div>
                 @endforeach
             </article>
-
-
         </section>
     </section>
 @endsection

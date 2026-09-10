@@ -1,6 +1,11 @@
 @extends('layouts.public')
 
 @section('content')
+    <!-- Leaflet Assets -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{{ asset('js/barangay-map-data.js') }}"></script>
+
     <style>
         .form-page {
             display: grid;
@@ -56,6 +61,38 @@
             border: 0;
             border-radius: 18px;
             background: #dbe7df;
+            z-index: 0;
+        }
+
+        .geo-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: #2563eb;
+            color: #ffffff;
+            border: 0;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .geo-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .geo-status-banner {
+            font-size: 0.82rem;
+            line-height: 1.4;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+            margin-top: 6px;
         }
 
         .paper-form {
@@ -189,34 +226,39 @@
         <div class="form-page">
             <div class="gis-grid">
                 <article class="hazard-map">
-                    <p class="eyebrow">GIS Prototype</p>
-                    <h3 style="margin-bottom: 14px;">Bagumbayan map reference</h3>
-                    <iframe
-                        class="gis-frame"
-                        title="Bagumbayan GIS prototype map"
-                        src="https://www.openstreetmap.org/export/embed.html?bbox=123.7056%2C13.1381%2C123.7256%2C13.1481&layer=mapnik&marker=13.1431%2C123.7156">
-                    </iframe>
+                    <p class="eyebrow">Geographic Incident Capture</p>
+                    <h3 style="margin-bottom: 14px;">Barangay Bagumbayan Interactive Map</h3>
+                    <div id="incident-picker-map" class="gis-frame"></div>
                 </article>
 
                 <article class="gis-card">
-                    <p class="eyebrow">GIS Prototype</p>
-                    <h3>Incident location reference</h3>
+                    <p class="eyebrow">Location Selection</p>
+                    <h3>Incident Location Reference</h3>
                     <div class="gis-meta">
                         <div class="list-item">
-                            <strong>Default location</strong>
+                            <strong>Barangay Area:</strong>
                             Bagumbayan, Daraga, Albay, Philippines
                         </div>
                         <div class="list-item">
-                            <strong>Map center</strong>
-                            <strong>Latitude: 13.1431<br></strong>
-                            <strong>Longitude: 123.7156</strong>
-                            
-                            
+                            <strong>Selected Coordinates:</strong><br>
+                            Latitude: <span id="display-latitude" style="font-family: monospace; font-weight: 700;">{{ old('Latitude', 'Pending selection') }}</span><br>
+                            Longitude: <span id="display-longitude" style="font-family: monospace; font-weight: 700;">{{ old('Longitude', 'Pending selection') }}</span>
+                        </div>
+                        <div class="list-item">
+                            <strong>Instruction:</strong><br>
+                            <span style="font-size: 0.85rem; color: #4b5563;">
+                                Click anywhere on the map or drag the pin directly onto the incident spot. If reporting from the scene, click <strong>Use My Location</strong> below.
+                            </span>
                         </div>
                     </div>
 
-                    <div class="hero-actions">
-                        <a class="button secondary" href="https://www.openstreetmap.org/?mlat=13.1431&mlon=123.7156#map=16/13.1431/123.7156" target="_blank" rel="noopener noreferrer">Open Full Map</a>
+                    <div style="margin-top: 16px; display: grid; gap: 8px;">
+                        <button type="button" id="btn-use-my-location" class="geo-btn">
+                            <span>📍</span> Use My Current Location
+                        </button>
+                        <div id="geo-status-banner" class="geo-status-banner">
+                            Detecting location...
+                        </div>
                     </div>
                 </article>
             </div>
@@ -228,8 +270,18 @@
                     <p><strong>KP FORM NO. 7</strong></p>
                 </div>
 
-                <form method="POST" action="{{ route('public.incidents.submit') }}">
+                <form id="incident-report-form" method="POST" action="{{ route('public.incidents.submit') }}">
                     @csrf
+
+                    <!-- Database Coordinates (incident_blotter: Latitude, Longitude) -->
+                    <input type="hidden" name="Latitude" id="incident_latitude" value="{{ old('Latitude', '') }}" required>
+                    <input type="hidden" name="Longitude" id="incident_longitude" value="{{ old('Longitude', '') }}" required>
+
+                    @if ($errors->has('Latitude') || $errors->has('Longitude') || $errors->has('latitude') || $errors->has('longitude'))
+                        <div class="list-item" style="margin-bottom: 18px; color: #b55343; border-left: 3px solid #b55343; padding-left: 10px;">
+                            Please pin the incident location on the map above before submitting.
+                        </div>
+                    @endif
 
                     <div class="paper-top" style="margin-bottom: 24px;">
                         <div class="paper-block">
@@ -399,15 +451,16 @@
             </article>
 
             <article class="card">
-                <h3>Prototype notes</h3>
-                <div class="list-item">This page now follows the complaint form structure from the attached image.</div>
-                <div class="list-item">The layout is still a prototype and does not submit data to the database.</div>
-                <div class="list-item">If needed, this exact form can be connected later to a controller and PDF print layout.</div>
+                <h3>Reporting Guidelines</h3>
+                <div class="list-item">Please verify the pin location accurately represents where the incident occurred.</div>
+                <div class="list-item">False reporting or intentionally fabricated locations are subject to applicable barangay ordinances and laws.</div>
+                <div class="list-item">Reports filed outside of regular office hours will be addressed on the following business day.</div>
             </article>
         </div>
     </section>
 
     <script>
+        // --- Complainant and Respondent Field Logic ---
         const reporterType = document.getElementById('reporter_type');
         const residentFields = document.getElementById('resident_fields');
         const guestFields = document.getElementById('guest_fields');
@@ -486,5 +539,132 @@
         });
 
         updateFormFields();
+
+        // --- Leaflet & OpenStreetMap Location Picker Logic ---
+        document.addEventListener("DOMContentLoaded", function () {
+            const geo = window.BagumbayanGeoData;
+            const defaultCenter = (geo && geo.center) ? geo.center : [13.142648, 123.716538];
+
+            const latInput = document.getElementById('incident_latitude');
+            const lngInput = document.getElementById('incident_longitude');
+            const displayLat = document.getElementById('display-latitude');
+            const displayLng = document.getElementById('display-longitude');
+            const geoStatus = document.getElementById('geo-status-banner');
+            const btnMyLocation = document.getElementById('btn-use-my-location');
+            const incidentForm = document.getElementById('incident-report-form');
+
+            let initialLat = parseFloat(latInput.value);
+            let initialLng = parseFloat(lngInput.value);
+            const hasInitial = !isNaN(initialLat) && !isNaN(initialLng);
+
+            const startPos = hasInitial ? [initialLat, initialLng] : defaultCenter;
+
+            const map = L.map('incident-picker-map').setView(startPos, 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            if (geo && geo.puroks) {
+                geo.puroks.forEach(function (purok) {
+                    L.polygon(purok.coords, {
+                        color: purok.color,
+                        weight: 1.5,
+                        opacity: 0.6,
+                        fillColor: purok.color,
+                        fillOpacity: 0.08,
+                        dashArray: '3, 4'
+                    }).bindTooltip(purok.name, { sticky: true }).addTo(map);
+                });
+            }
+
+            let marker = L.marker(startPos, {
+                draggable: true,
+                autoPan: true
+            }).addTo(map);
+
+            marker.bindPopup("<strong>Incident Location</strong><br>Drag pin or click map to reposition.");
+
+            function setCoordinates(lat, lng) {
+                const fixedLat = parseFloat(lat).toFixed(6);
+                const fixedLng = parseFloat(lng).toFixed(6);
+
+                latInput.value = fixedLat;
+                lngInput.value = fixedLng;
+                displayLat.textContent = fixedLat;
+                displayLng.textContent = fixedLng;
+
+                marker.setLatLng([fixedLat, fixedLng]);
+            }
+
+            if (hasInitial) {
+                setCoordinates(initialLat, initialLng);
+                geoStatus.textContent = "Previously entered location restored.";
+            }
+
+            marker.on('dragend', function (e) {
+                const pos = e.target.getLatLng();
+                setCoordinates(pos.lat, pos.lng);
+                geoStatus.textContent = "Location adjusted manually by pin drag.";
+            });
+
+            map.on('click', function (e) {
+                setCoordinates(e.latlng.lat, e.latlng.lng);
+                geoStatus.textContent = "Location selected by map click.";
+            });
+
+            function requestGeolocation() {
+                if (!navigator.geolocation) {
+                    geoStatus.textContent = "Unable to determine location. Please click or drag on the map.";
+                    if (!latInput.value) setCoordinates(defaultCenter[0], defaultCenter[1]);
+                    return;
+                }
+
+                geoStatus.textContent = "Requesting device location...";
+
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        setCoordinates(lat, lng);
+                        map.setView([lat, lng], 17);
+                        marker.openPopup();
+                        geoStatus.textContent = "Current location detected and set.";
+                    },
+                    function (error) {
+                        if (!hasInitial && !latInput.value) {
+                            setCoordinates(defaultCenter[0], defaultCenter[1]);
+                        }
+                        geoStatus.textContent = "Unable to determine your current location. Please select the incident location on the map.";
+                    },
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                );
+            }
+
+            btnMyLocation.addEventListener('click', requestGeolocation);
+
+            if (!hasInitial) {
+                requestGeolocation();
+            }
+
+            // Client-side guard against empty coordinate submission
+            if (incidentForm) {
+                incidentForm.addEventListener('submit', function (e) {
+                    const latVal = parseFloat(latInput.value);
+                    const lngVal = parseFloat(lngInput.value);
+
+                    if (isNaN(latVal) || isNaN(lngVal)) {
+                        e.preventDefault();
+                        alert('Please pin or select the incident location on the map before submitting.');
+                        document.getElementById('incident-picker-map').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+
+            setTimeout(function () {
+                map.invalidateSize();
+            }, 250);
+        });
     </script>
 @endsection
