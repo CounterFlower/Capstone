@@ -89,8 +89,8 @@ class ResidentRepository
                 'ib.Date_Filed as Date_Filed',
                 'ib.Resolution_Status as Resolution_Status',
                 'ib.Handled_By as Handled_By',
-                'ib.Latitude as Latitude',     // Selected for Leaflet map pin placement
-                'ib.Longitude as Longitude',   // Selected for Leaflet map pin placement
+                'ib.Latitude as Latitude',
+                'ib.Longitude as Longitude',
                 DB::raw($reporterExpression.' as Reporter_Name'),
             ])
             ->orderByDesc('ib.Date_Filed')
@@ -99,30 +99,81 @@ class ResidentRepository
 
     public function findMatchingResident(array $payload): ?object
     {
-        $query = DB::table('resident')
-            ->where('First_Name', trim($payload['first_name']))
-            ->where('Last_Name', trim($payload['last_name']));
+        $query = DB::table('resident');
 
+        $singleName = trim($payload['resident_name'] ?? ($payload['name'] ?? ''));
+        $firstName  = strtolower(trim($payload['first_name'] ?? ''));
+        $middleName = strtolower(trim($payload['middle_name'] ?? ''));
+        $lastName   = strtolower(trim($payload['last_name'] ?? ''));
+
+        // 1. Name Resolution (Supports single-field full string or 3 discrete fields)
+        if (! empty($singleName)) {
+            $rawName = strtolower($singleName);
+
+            $query->where(function ($q) use ($rawName) {
+                $q->whereRaw("LOWER(CONCAT_WS(' ', TRIM(First_Name), NULLIF(TRIM(Middle_Name), ''), TRIM(Last_Name))) = ?", [$rawName])
+                  ->orWhereRaw("LOWER(CONCAT(TRIM(First_Name), ' ', TRIM(Last_Name))) = ?", [$rawName])
+                  ->orWhere(function ($sub) use ($rawName) {
+                      $sub->whereRaw("? LIKE LOWER(CONCAT('%', TRIM(Last_Name), '%'))", [$rawName])
+                          ->whereRaw("? LIKE LOWER(CONCAT('%', TRIM(First_Name), '%'))", [$rawName]);
+                  });
+            });
+        } else {
+            // Split fields verification
+            if (! empty($lastName)) {
+                $query->whereRaw('LOWER(TRIM(Last_Name)) = ?', [$lastName]);
+            }
+
+            if (! empty($firstName)) {
+                $query->where(function ($q) use ($firstName) {
+                    $q->whereRaw('LOWER(TRIM(First_Name)) LIKE ?', ["%{$firstName}%"])
+                      ->orWhereRaw('? LIKE LOWER(CONCAT("%", TRIM(First_Name), "%"))', [$firstName]);
+                });
+            }
+
+            // Middle name is optional: match only if provided
+            if (! empty($middleName)) {
+                $query->where(function ($q) use ($middleName) {
+                    $q->whereRaw('LOWER(TRIM(Middle_Name)) LIKE ?', ["%{$middleName}%"])
+                      ->orWhereRaw('? LIKE LOWER(CONCAT("%", TRIM(Middle_Name), "%"))', [$middleName]);
+                });
+            }
+        }
+
+        // 2. Date of Birth Check (optional)
         if (! empty($payload['date_of_birth'])) {
             $query->whereDate('Date_of_Birth', $payload['date_of_birth']);
         }
 
-        if (! empty($payload['contact_number'])) {
-            $query->where('Contact_Number', trim($payload['contact_number']));
-        }
+        // 3. Flexible Household / Purok Matching (Digit-friendly)
+        if (! empty($payload['purok']) || ! empty($payload['house_number'])) {
+            $householdQuery = DB::table('household');
 
-        if (! empty($payload['house_number']) || ! empty($payload['purok'])) {
-            $householdIndexes = DB::table('household')
-                ->when(! empty($payload['house_number']), fn ($q) => $q->where('House_Number', trim($payload['house_number'])))
-                ->when(! empty($payload['purok']), fn ($q) => $q->where('Zone_Purok', trim($payload['purok'])))
-                ->pluck('Household_Index');
+            if (! empty($payload['house_number'])) {
+                $householdQuery->whereRaw('LOWER(TRIM(House_Number)) = ?', [strtolower(trim($payload['house_number']))]);
+            }
 
-            $householdIndexes = $householdIndexes instanceof \Illuminate\Support\Collection
-                ? $householdIndexes->all()
-                : (array) $householdIndexes;
+            if (! empty($payload['purok'])) {
+                $rawPurok = strtolower(trim($payload['purok']));
+                $purokNumber = preg_replace('/[^0-9]/', '', $rawPurok);
 
-            if (! empty($householdIndexes)) {
-                $query->whereIn('Household_Index', $householdIndexes);
+                $householdQuery->where(function ($h) use ($rawPurok, $purokNumber) {
+                    // Direct string match or substring match
+                    $h->whereRaw('LOWER(TRIM(Zone_Purok)) = ?', [$rawPurok])
+                      ->orWhereRaw('LOWER(Zone_Purok) LIKE ?', ["%{$rawPurok}%"]);
+
+                    // Digit match: allows "6" to match "Purok 6", "Zone 6", or "6"
+                    if (! empty($purokNumber)) {
+                        $h->orWhereRaw("REGEXP_REPLACE(Zone_Purok, '[^0-9]', '') = ?", [$purokNumber])
+                          ->orWhereRaw("LOWER(Zone_Purok) LIKE ?", ["%{$purokNumber}%"]);
+                    }
+                });
+            }
+
+            $indexes = $householdQuery->pluck('Household_Index')->all();
+
+            if (! empty($indexes)) {
+                $query->whereIn('Household_Index', $indexes);
             }
         }
 
@@ -134,6 +185,7 @@ class ResidentRepository
             'Date_of_Birth',
             'Contact_Number',
             'Household_Index',
+            'Is_Verified',
         ]);
     }
 
@@ -398,7 +450,7 @@ class ResidentRepository
             ->where('Request_ID', $requestId)
             ->update([
                 'Status' => 'Approved',
-                'Pickup_Schedule' => now()->setTimezone('Asia/Manila')->addDays(3)->format('Y-m-d H:i:s'),
+                'Pickup_Schedule' => now()->setTimezone('Asia/Manila')->format('Y-m-d H:i:s'),
             ]);
     }
 
@@ -410,5 +462,38 @@ class ResidentRepository
                 'Resolution_Status' => $resolutionStatus,
                 'Handled_By' => $handledBy,
             ]);
+    }
+    public function getEventRegistrations(?int $eventId = null): \Illuminate\Support\Collection
+    {
+        if (! Schema::hasTable('event_rsvp') || ! Schema::hasTable('resident')) {
+            return collect();
+        }
+
+        $query = DB::table('event_rsvp as er')
+            ->join('resident as r', 'r.Resident_ID', '=', 'er.Resident_ID')
+            ->join('event as e', 'e.Event_ID', '=', 'er.Event_ID')
+            ->leftJoin('household as h', 'h.Household_Index', '=', 'r.Household_Index')
+            ->select([
+                'er.RSVP_ID',
+                'er.Date_Registered',
+                'er.Attendance_Status',
+                'e.Event_ID',
+                'e.Event_Name',
+                'e.Event_Date',
+                'r.Resident_ID',
+                'r.First_Name',
+                'r.Middle_Name',
+                'r.Last_Name',
+                'r.Contact_Number',
+                'h.Zone_Purok',
+                'h.House_Number',
+            ])
+            ->orderByDesc('er.Date_Registered');
+
+        if (! empty($eventId)) {
+            $query->where('er.Event_ID', $eventId);
+        }
+
+        return $query->get();
     }
 }

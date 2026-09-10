@@ -40,82 +40,239 @@
     </section>
 
     <!-- OVERVIEW TAB -->
-    <section class="tab-panel {{ ($activeTab ?? 'overview') === 'overview' ? 'active' : '' }}" data-tab-panel="overview">
-        <section class="stats" id="overview">
-            <article class="stat">
-                <span>Total Residents</span>
-                <strong>1,254</strong>
-            </article>
-            <article class="stat">
-                <span>Pending Document Requests</span>
-                <strong>36</strong>
-            </article>
-            <article class="stat">
-                <span>Open Cases</span>
-                <strong>14</strong>
-            </article>
-            <article class="stat">
-                <span>Event Sign-Ups</span>
-                <strong>{{ count($registrations) }}</strong>
-            </article>
-        </section>
-
-        <section class="grid">
-            <article class="card">
-                <h2>Administrative Snapshot</h2>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Module</th>
-                            <th>Current Load</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Incident Reporting</td>
-                            <td>5 new submissions today</td>
-                            <td><span class="badge alert">Priority</span></td>
-                        </tr>
-                        <tr>
-                            <td>Document Requests</td>
-                            <td>36 total requests in queue</td>
-                            <td><span class="badge warn">Review</span></td>
-                        </tr>
-                        <tr>
-                            <td>Resident Records</td>
-                            <td>27 incomplete profiles</td>
-                            <td><span class="badge good">Stable</span></td>
-                        </tr>
-                        <tr>
-                            <td>Event Registrations</td>
-                            <td>{{ count($registrations) }} current sign-ups</td>
-                            <td><span class="badge good">Tracked</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </article>
-
-            <article class="card">
-                <h2>Quick Notes</h2>
-                <div class="list">
-                    <div class="list-item">
-                        <strong>Pending validation</strong>
-                        Clearance requests are the largest current backlog.
-                    </div>
-                    <div class="list-item">
-                        <strong>Case handling</strong>
-                        Boundary disputes and noise complaints are the most common incident types this week.
-                    </div>
-                    <div class="list-item">
-                        <strong>Records quality</strong>
-                        Several resident entries still need household ID or contact number verification.
-                    </div>
-                </div>
-            </article>
-        </section>
+<section class="tab-panel {{ ($activeTab ?? 'overview') === 'overview' ? 'active' : '' }}" data-tab-panel="overview">
+    <!-- Top Live Stats Counters -->
+    <section class="stats" id="overview">
+        <article class="stat">
+            <span>Total Residents</span>
+            <strong>{{ number_format(count($residentProfiles ?? [])) }}</strong>
+        </article>
+        <article class="stat">
+            <span>Pending Document Requests</span>
+            <strong>{{ number_format(collect($pendingDocumentRequests ?? [])->where('Status', 'Pending')->count()) }}</strong>
+        </article>
+        <article class="stat">
+            <span>Open Incident Cases</span>
+            <strong>{{ number_format(max(0, ($totalCases ?? 0) - ($resolvedCases ?? 0))) }}</strong>
+        </article>
+        <article class="stat">
+            <span>Event Sign-Ups</span>
+            <strong>{{ number_format(count($registrations ?? [])) }}</strong>
+        </article>
     </section>
 
+    <!-- Side-by-Side Accomplishment Line Charts (0-100%) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        
+        <!-- Document Requests Accomplished Trend -->
+        <article class="card" style="padding: 22px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Document Requests Accomplished</h3>
+                    <small style="color: #64748b;">Chronological issuance rate</small>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.6rem; font-weight: 800; color: #10b981;">{{ $docRate ?? 0 }}%</span>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                        {{ $releasedDocRequests ?? 0 }} of {{ $totalDocRequests ?? 0 }} Released
+                    </div>
+                </div>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="documentLineChart"></canvas>
+            </div>
+        </article>
+
+        <!-- Incident Cases Solved Trend -->
+        <article class="card" style="padding: 22px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Incident Cases Solved</h3>
+                    <small style="color: #64748b;">Chronological case resolution rate</small>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.6rem; font-weight: 800; color: #2563eb;">{{ $caseRate ?? 0 }}%</span>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                        {{ $resolvedCases ?? 0 }} of {{ $totalCases ?? 0 }} Settled
+                    </div>
+                </div>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="caseLineChart"></canvas>
+            </div>
+        </article>
+    </div>
+
+    <!-- Administrative Snapshot & Notes -->
+    <section class="grid">
+        <article class="card">
+            <h2>Administrative Snapshot</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Current Load</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Incident Reporting</td>
+                        <td>{{ max(0, ($totalCases ?? 0) - ($resolvedCases ?? 0)) }} active pending blotters</td>
+                        <td>
+                            <span class="badge {{ (($totalCases ?? 0) - ($resolvedCases ?? 0)) > 5 ? 'alert' : 'warn' }}">
+                                {{ (($totalCases ?? 0) - ($resolvedCases ?? 0)) > 0 ? 'Active' : 'Settled' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Document Requests</td>
+                        <td>{{ $totalDocRequests ?? 0 }} requests logged ({{ $releasedDocRequests ?? 0 }} released)</td>
+                        <td>
+                            <span class="badge {{ ($docRate ?? 0) >= 70 ? 'good' : 'warn' }}">
+                                {{ ($docRate ?? 0) >= 70 ? 'Optimal' : 'Review' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Resident Records</td>
+                        <td>{{ number_format(count($residentProfiles ?? [])) }} profiles on file</td>
+                        <td><span class="badge good">Stable</span></td>
+                    </tr>
+                    <tr>
+                        <td>Event Registrations</td>
+                        <td>{{ count($registrations ?? []) }} current sign-ups</td>
+                        <td><span class="badge good">Tracked</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+
+        <article class="card">
+            <h2>Quick Notes</h2>
+            <div class="list">
+                <div class="list-item">
+                    <strong>Document Handling</strong>
+                    Clearance and residency certificates are tracked dynamically per status update.
+                </div>
+                <div class="list-item">
+                    <strong>Resolution Metric</strong>
+                    Incidents count as settled once recorded as resolved, settled, or closed.
+                </div>
+                <div class="list-item">
+                    <strong>Operational Goal</strong>
+                    Maintain both document issuance and blotter settlements above 80%.
+                </div>
+            </div>
+        </article>
+    </section>
+</section>
+
+<!-- Chart.js CDN & Rendering -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const commonYAxis = {
+        min: 0,
+        max: 100,
+        ticks: {
+            stepSize: 20,
+            callback: function(value) {
+                return value + '%';
+            }
+        },
+        grid: {
+            color: '#f1f5f9'
+        }
+    };
+
+    // 1. Document Request Accomplished Trend
+    const docCtx = document.getElementById('documentLineChart');
+    if (docCtx) {
+        new Chart(docCtx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($docChartLabels ?? []) !!},
+                datasets: [{
+                    label: 'Accomplished (%)',
+                    data: {!! json_encode($docChartRates ?? []) !!},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#10b981'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Accomplished: ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: commonYAxis,
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Incident Case Resolution Trend
+    const caseCtx = document.getElementById('caseLineChart');
+    if (caseCtx) {
+        new Chart(caseCtx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($caseChartLabels ?? []) !!},
+                datasets: [{
+                    label: 'Resolved (%)',
+                    data: {!! json_encode($caseChartRates ?? []) !!},
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#2563eb'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Resolved: ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: commonYAxis,
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
     <!-- CASES TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'cases' ? 'active' : '' }}" data-tab-panel="cases">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -438,92 +595,154 @@
     </section>
 
     <!-- REQUESTS TAB -->
-    <section class="tab-panel {{ ($activeTab ?? 'overview') === 'requests' ? 'active' : '' }}" data-tab-panel="requests">
-        <section class="panels" id="requests">
-            <article class="card">
-                <h2>Pending Document Requests</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Resident requests linked by Resident_ID and awaiting staff approval.</p>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Request ID</th>
-                            <th>Resident</th>
-                            <th>Resident ID</th>
-                            <th>Document Type</th>
-                            <th>Purpose</th>
-                            <th>Date Requested</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($pendingDocumentRequests as $request)
-                            <tr>
-                                <td>{{ $request->Request_ID }}</td>
-                                <td>{{ $request->Resident_Name }}</td>
-                                <td>{{ $request->Resident_ID }}</td>
-                                <td>{{ $request->Document_Type }}</td>
-                                <td>{{ $request->Purpose ?: 'Not specified' }}</td>
-                                <td>{{ Carbon::parse($request->Date_Requested)->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}</td>
-                                <td><span class="badge warn">{{ $request->Status }}</span></td>
-                                <td>
-                                    <form method="POST" action="{{ route('admin.documents.approve') }}">
-                                        @csrf
-                                        <input type="hidden" name="request_id" value="{{ $request->Request_ID }}">
-                                        <button type="submit" class="form-submit">Approve</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8">No pending document requests.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </article>
+<section class="tab-panel {{ in_array(($activeTab ?? ''), ['requests', 'documents']) ? 'active' : '' }}" data-tab-panel="requests">
+    @if (session('status'))
+        <div style="padding: 12px 16px; background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; border-radius: 8px; margin-bottom: 20px;">
+            {{ session('status') }}
+        </div>
+    @endif
 
-            <article class="card">
-                <h2>Request Categories</h2>
-                <div class="list">
-                    <div class="list-item"><strong>Barangay Clearance</strong> Highest request volume this month.</div>
-                    <div class="list-item"><strong>Certificate of Residency</strong> Most common for school and employment use.</div>
-                    <div class="list-item"><strong>Business Endorsement</strong> Lower volume, longer review path.</div>
-                    <div class="list-item"><strong>Certificate of Indigency</strong> Frequently requested for assistance and hospital support.</div>
-                </div>
-            </article>
-        </section>
-    </section>
+    <article class="card" style="width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem;">Document Issuance Requests</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Monitor, review, and issue barangay clearances, indigency certificates, and permits.</p>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569;">
+                        <th style="padding: 12px 10px;">Req ID</th>
+                        <th style="padding: 12px 10px;">Resident Name</th>
+                        <th style="padding: 12px 10px;">Document Type</th>
+                        <th style="padding: 12px 10px;">Purpose</th>
+                        <th style="padding: 12px 10px;">Purok</th>
+                        <th style="padding: 12px 10px;">Requested On</th>
+                        <th style="padding: 12px 10px; text-align: center;">Status</th>
+                        <th style="padding: 12px 10px; text-align: center;">Update Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($pendingDocumentRequests as $doc)
+                        @php
+                            $status = $doc->Status ?? 'Pending';
+                            $statusStyles = [
+                                'Pending'      => 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a;',
+                                'Released'     => 'background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;',
+                                'Not Approved' => 'background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;',
+                            ];
+                            $badgeStyle = $statusStyles[$status] ?? 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;';
+                        @endphp
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px 10px; font-weight: 700; color: #1e293b; white-space: nowrap;">
+                                #DOC-{{ str_pad($doc->Request_ID ?? $doc->id, 3, '0', STR_PAD_LEFT) }}
+                            </td>
+                            <td style="padding: 12px 10px; font-weight: 600; color: #0f172a;">
+                                {{ $doc->resident_name ?? 'N/A' }}
+                                @if(!empty($doc->contact))
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 400;">{{ $doc->contact }}</div>
+                                @endif
+                            </td>
+                            <td style="padding: 12px 10px; font-weight: 600; color: #334155;">
+                                {{ $doc->document_name ?? $doc->Document_Type ?? 'Barangay Document' }}
+                            </td>
+                            <td style="padding: 12px 10px; color: #475569; max-width: 200px;">
+                                {{ $doc->Purpose ?? $doc->purpose ?? 'General Use' }}
+                            </td><td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+    @php
+        $purokVal = $doc->purok ?? $doc->Purok_Number ?? $doc->Purok ?? null;
+    @endphp
+    {{ $purokVal ? 'Purok ' . $purokVal : '—' }}
+</td>
+                            <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+                                {{ !empty($doc->Request_Date) ? \Carbon\Carbon::parse($doc->Request_Date)->format('M d, Y h:i A') : '—' }}
+                            </td>
+                            <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; {{ $badgeStyle }}">
+                                    {{ $status }}
+                                </span>
+                            </td>
+                            <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
+                                <form action="{{ route('admin.documents.update-status') }}" method="POST" style="display: inline-flex; gap: 4px; align-items: center;">
+                                    @csrf
+                                    <input type="hidden" name="request_id" value="{{ $doc->Request_ID ?? $doc->id }}">
+                                    
+                                    @if ($status !== 'Pending')
+                                        <button type="submit" name="status" value="Pending" style="background: #eab308; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer;">
+                                            Pending
+                                        </button>
+                                    @endif
+
+                                    @if ($status !== 'Released')
+                                        <button type="submit" name="status" value="Released" style="background: #16a34a; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer;">
+                                            Release
+                                        </button>
+                                    @endif
+
+                                    @if ($status !== 'Not Approved')
+                                        <button type="submit" name="status" value="Not Approved" onclick="return confirm('Mark this request as Not Approved?');" style="background: #ef4444; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer;">
+                                            Decline
+                                        </button>
+                                    @endif
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" style="padding: 32px; text-align: center; color: #94a3b8; font-style: italic;">
+                                No document requests submitted yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
 
     <!-- EVENTS TAB -->
     <section class="tab-panel {{ ($activeTab ?? 'overview') === 'events' ? 'active' : '' }}" data-tab-panel="events">
         <section class="panels">
             <!-- Create Event Card -->
-            <article class="card">
-                <h2>Schedule New Activity</h2>
-                @if (session('status'))
-                    <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
-                @endif
-                <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="active_tab" value="events">
-                    <div class="form-grid">
-                        <label class="form-field">Event title<input name="title" value="{{ old('title') }}" placeholder="e.g. Barangay Clean-up Drive" required></label>
-                        <label class="form-field">Venue<input name="venue" value="{{ old('venue') }}" placeholder="e.g. Covered Court" required></label>
-                        <label class="form-field">Start date<input type="date" name="date" value="{{ old('date') }}" required></label>
-                        <label class="form-field">Start time<input type="time" name="time" value="{{ old('time') }}" required></label>
-                        <label class="form-field">End date <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="date" name="end_date" value="{{ old('end_date') }}"></label>
-                        <label class="form-field">End time <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="time" name="end_time" value="{{ old('end_time') }}"></label>
-                        <label class="form-field">Available slots<input type="number" name="available_slots" min="1" value="{{ old('available_slots', 50) }}" placeholder="e.g. 50" required></label>
-                        <label class="form-field">Cover image <span style="font-weight: 400; color: var(--muted);">(optional)</span><input type="file" name="cover_image" accept="image/*"></label>
-                    </div>
-                    <label class="form-field" style="margin-top: 16px; display: block;">Summary<textarea name="summary" rows="3" placeholder="Brief event description">{{ old('summary') }}</textarea></label>
-                    @if ($errors->any())
-                        <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
-                    @endif
-                    <button type="submit" class="form-submit" style="margin-top: 16px;">Save & Publish Event</button>
-                </form>
-            </article>
+<article class="card">
+    <h2>Schedule New Activity</h2>
+    @if (session('status'))
+        <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
+    @endif
+    <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
+        @csrf
+        <input type="hidden" name="active_tab" value="events">
+        <div class="form-grid">
+            <label class="form-field">Event title
+                <input name="event_name" value="{{ old('event_name') }}" placeholder="e.g. Barangay Clean-up Drive" required>
+            </label>
+            <label class="form-field">Venue
+                <input name="location" value="{{ old('location') }}" placeholder="e.g. Covered Court" required>
+            </label>
+            <label class="form-field">Start date & time
+                <input type="datetime-local" name="event_date" value="{{ old('event_date') }}" required>
+            </label>
+            <label class="form-field">End date & time <span style="font-weight: 400; color: var(--muted);">(optional)</span>
+                <input type="datetime-local" name="end_date" value="{{ old('end_date') }}">
+            </label>
+            <label class="form-field">Available slots
+                <input type="number" name="available_slots" min="1" value="{{ old('available_slots', 50) }}" placeholder="e.g. 50" required>
+            </label>
+            <label class="form-field">Cover image <span style="font-weight: 400; color: var(--muted);">(optional)</span>
+                <input type="file" name="cover_image" accept="image/*">
+            </label>
+        </div>
+        <label class="form-field" style="margin-top: 16px; display: block;">Summary
+            <textarea name="summary" rows="3" placeholder="Brief event description">{{ old('summary') }}</textarea>
+        </label>
+        @if ($errors->any())
+            <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
+        @endif
+        <button type="submit" class="form-submit" style="margin-top: 16px;">Save & Publish Event</button>
+    </form>
+</article>
 
             <!-- Scheduled Activities Table with Live Slots & Actions -->
             <article class="card">
@@ -599,51 +818,84 @@
             </article>
 
             <!-- Event Sign-ups Log -->
-            <article class="card">
-                <h2>Event Registration Summary</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Residents who signed up for barangay activities from the public event page.</p>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Reference</th>
-                            <th>Resident</th>
-                            <th>Event</th>
-                            <th>Purok</th>
-                            <th>Submitted</th>
+            <article class="card" style="margin-top: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+        <div>
+            <p class="eyebrow">Public Activity Attendance</p>
+            <h3>Enlisted Residents / RSVPs</h3>
+        </div>
+
+        <!-- Filter by Event Dropdown -->
+        <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 8px; align-items: center;">
+            <input type="hidden" name="tab" value="events-attendees">
+            
+            <label for="event_filter" style="font-weight: 600; font-size: 0.9rem;">Filter Event:</label>
+            <select name="event_filter" id="event_filter" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(22, 48, 36, 0.2); font: inherit;">
+                <option value="">-- All Events ({{ $eventRegistrations->count() }}) --</option>
+                @foreach ($eventsList as $evt)
+                    <option value="{{ $evt->Event_ID }}" {{ (string)$selectedEventFilter === (string)$evt->Event_ID ? 'selected' : '' }}>
+                        {{ $evt->Event_Name }} ({{ $evt->Event_Date }})
+                    </option>
+                @endforeach
+            </select>
+
+            @if ($selectedEventFilter)
+                <a href="{{ route('admin.dashboard', ['tab' => 'events-attendees']) }}" class="button secondary" style="padding: 6px 12px; font-size: 0.85rem;">Clear</a>
+            @endif
+        </form>
+    </div>
+
+    @if ($eventRegistrations->isEmpty())
+        <p style="color: var(--muted); font-style: italic; margin-top: 12px;">No residents have enlisted for this activity yet.</p>
+    @else
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(22, 48, 36, 0.1); color: var(--muted);">
+                        <th style="padding: 10px;">Resident Name</th>
+                        <th style="padding: 10px;">Event Enlisted</th>
+                        <th style="padding: 10px;">Purok / Address</th>
+                        <th style="padding: 10px;">Contact Number</th>
+                        <th style="padding: 10px;">Enlisted At</th>
+                        <th style="padding: 10px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($eventRegistrations as $reg)
+                        <tr style="border-bottom: 1px solid rgba(22, 48, 36, 0.06);">
+                            <td style="padding: 12px 10px; font-weight: 600;">
+                                {{ $reg->Last_Name }}, {{ $reg->First_Name }} {{ $reg->Middle_Name ?? '' }}
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                <strong>{{ $reg->Event_Name }}</strong><br>
+                                <span style="font-size: 0.8rem; color: var(--muted);">{{ $reg->Event_Date }}</span>
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                {{ $reg->Zone_Purok ?? 'Unassigned' }}
+                                @if ($reg->House_Number)
+                                    <small style="color: var(--muted);">({{ $reg->House_Number }})</small>
+                                @endif
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                {{ $reg->Contact_Number ?? 'N/A' }}
+                            </td>
+                            <td style="padding: 12px 10px; font-size: 0.85rem; color: var(--muted);">
+                                {{ \Carbon\Carbon::parse($reg->Date_Registered)->format('M d, Y h:i A') }}
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                <span style="display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; background: rgba(45, 124, 84, 0.12); color: var(--success);">
+                                    {{ $reg->Attendance_Status }}
+                                </span>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($registrations as $registration)
-                            <tr>
-                                <td>{{ $registration['reference'] }}</td>
-                                <td>{{ $registration['resident_name'] }}</td>
-                                <td>{{ $registration['event_title'] }}</td>
-                                <td>{{ $registration['purok'] }}</td>
-                                <td>{{ $registration['submitted_at'] }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5">No event registrations yet.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </article>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</article>
         </section>
     </section>
 
-    <!-- ANALYTICS TAB -->
-    <section class="tab-panel {{ ($activeTab ?? 'overview') === 'analytics' ? 'active' : '' }}" data-tab-panel="analytics">
-        <section class="grid" id="analytics">
-            <article class="card">
-                <h2>Statistical Layouts</h2>
-                @foreach ($analyticsBlocks as $metric)
-                    <div class="chart-row">
-                        <label><span>{{ $metric['label'] }}</span><span>{{ $metric['value'] }}</span></label>
-                        <div class="bar-track"><div class="bar-fill" style="width: {{ $metric['width'] }}%;"></div></div>
-                    </div>
-                @endforeach
-            </article>
-        </section>
-    </section>
+
 @endsection

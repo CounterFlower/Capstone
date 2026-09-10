@@ -87,7 +87,6 @@
             border-radius: 4px !important;
         }
 
-        /* Custom Landmark Icon Pin Styling */
         .landmark-pin-wrapper {
             display: flex;
             align-items: center;
@@ -126,45 +125,47 @@
         }
     </style>
 
-    <section class="hero">
+   <section class="hero">
         <section>
             <div class="section-head" style="margin-bottom: 18px;">
                 <div>
                     <p class="eyebrow">Barangay Activities</p>
                     <h2>Community event gallery</h2>
                 </div>
-                <p class="section-copy">Top section now uses the photos from your `resources/photos` folder.</p>
             </div>
 
+            <!-- Dynamic Event Gallery -->
             <div class="photo-grid">
-                @foreach ($photos as $photo)
+                @forelse ($galleryEvents as $eventItem)
                     <article class="photo-card">
-                        <img src="{{ route('public.photos', ['filename' => $photo['file']]) }}" alt="{{ $photo['title'] }}">
+                        <img src="{{ route('public.photos', ['filename' => $eventItem->image]) }}" alt="{{ $eventItem->title }}">
                         <div class="photo-copy">
-                            <h3>{{ $photo['title'] }}</h3>
-                            <p>{{ $photo['description'] }}</p>
+                            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">
+                                {{ $eventItem->date }} &bull; {{ $eventItem->venue }}
+                            </span>
+                            <h3 style="margin-top: 4px;">{{ $eventItem->title }}</h3>
+                            <p>{{ Str::limit($eventItem->description, 110) }}</p>
                         </div>
                     </article>
-                @endforeach
+                @empty
+                    <p style="color: var(--muted); font-style: italic;">No community events posted yet.</p>
+                @endforelse
             </div>
         </section>
 
+        <!-- Dynamic Bulletin Board / Announcements -->
         <aside class="notice-card">
             <p class="eyebrow">Latest Announcements</p>
             <h3>Barangay bulletin board</h3>
             <div class="notice-stack">
-                <div class="notice-item">
-                    <strong>Barangay Assembly</strong>
-                    May 16, 2026 at the covered court. Household representatives are expected to attend.
-                </div>
-                <div class="notice-item">
-                    <strong>Medical Mission Schedule</strong>
-                    Free check-up and consultation this Saturday, 8:00 AM to 12:00 PM.
-                </div>
-                <div class="notice-item">
-                    <strong>Service Advisory</strong>
-                    Clearance printing resumes at 1:00 PM after scheduled system maintenance.
-                </div>
+                @forelse ($announcements as $notice)
+                    <div class="notice-item">
+                        <strong>{{ $notice['title'] }}</strong>
+                        <p style="margin: 4px 0 0; font-size: 0.88rem; line-height: 1.4;">{{ $notice['body'] }}</p>
+                    </div>
+                @empty
+                    <p style="color: var(--muted); font-style: italic;">No current announcements posted.</p>
+                @endforelse
             </div>
         </aside>
     </section>
@@ -175,7 +176,6 @@
                 <p class="eyebrow">Resident Services</p>
                 <h2>Public access modules</h2>
             </div>
-            <p class="section-copy">These modules simulate resident-facing services without database writes.</p>
         </div>
 
         <div class="service-grid">
@@ -189,9 +189,9 @@
 
             <article class="service-card">
                 <h3>Document Requests</h3>
-                <p>Residents can view document types, processing flow, and prototype request forms.</p>
+                <p>Residents can view document types, processing flow, and request forms.</p>
                 <div class="hero-actions">
-                    <a class="button secondary" href="{{ route('public.documents') }}">Reqeust Document</a>
+                    <a class="button secondary" href="{{ route('public.documents') }}">Request Document</a>
                 </div>
             </article>
         </div>
@@ -231,32 +231,36 @@
         </div>
     </section>
 
+    <!-- Dynamic Event Registration Cards -->
     <section class="section">
         <div class="section-head">
             <div>
                 <p class="eyebrow">Event Registration</p>
                 <h2>Join barangay activities</h2>
             </div>
-            <p class="section-copy">Residents can register for barangay events through the prototype event module.</p>
+            <p class="section-copy">Register online to reserve slots for upcoming barangay programs.</p>
         </div>
 
         <div class="service-grid">
-            @foreach ($events as $event)
+            @forelse ($events as $event)
                 <article class="service-card">
-                    <h3>{{ $event['title'] }}</h3>
-                    <p>{{ $event['summary'] }}</p>
-                    <div class="list-item" style="margin-top: 14px;">
-                        {{ $event['date'] }} at {{ $event['time'] }}<br>
-                        {{ $event['venue'] }}
+                    <h3>{{ $event->Event_Name }}</h3>
+                    <p>{{ Str::limit($event->Description ?? $event->description ?? $event->Details ?? $event->details ?? 'Join us for this community activity.', 110) }}</p>
+                    <div class="list-item" style="margin-top: 14px; font-size: 0.9rem;">
+                        <strong>Date:</strong> {{ \Carbon\Carbon::parse($event->Event_Date)->format('M d, Y') }} at {{ \Carbon\Carbon::parse($event->Event_Date)->format('h:i A') }}<br>
+                        <strong>Venue:</strong> {{ $event->Location ?? 'Barangay Hall' }}
                     </div>
                     <div class="hero-actions">
-                        <a class="button secondary" href="{{ route('public.events', ['event' => $event['id']]) }}">Register Now</a>
+                        <a class="button secondary" href="{{ route('public.events', ['event' => $event->Event_ID]) }}">Register Now</a>
                     </div>
                 </article>
-            @endforeach
+            @empty
+                <p style="color: var(--muted); font-style: italic;">No activities currently open for registration.</p>
+            @endforelse
         </div>
     </section>
 
+    <!-- Dynamic Community Calendar Table -->
     <section class="section">
         <div class="content-grid">
             <article class="card">
@@ -271,21 +275,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>May 12</td>
-                            <td>Senior citizen payout assistance</td>
-                            <td>Barangay hall</td>
-                        </tr>
-                        <tr>
-                            <td>May 16</td>
-                            <td>Barangay assembly</td>
-                            <td>Covered court</td>
-                        </tr>
-                        <tr>
-                            <td>May 20</td>
-                            <td>Clean-up drive</td>
-                            <td>Purok 3 and Purok 4</td>
-                        </tr>
+                        @forelse ($events as $event)
+                            <tr>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($event->Event_Date)->format('M d, Y') }}</td>
+                                <td><strong>{{ $event->Event_Name }}</strong></td>
+                                <td>{{ $event->Location ?? 'Barangay Hall' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--muted); font-style: italic;">No scheduled activities on the calendar.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </article>
@@ -309,7 +309,6 @@
     <!-- Map Script -->
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // SVG paths matching landmark types
         const landmarkIcons = {
             gymnasium: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>`,
             hall: `<svg viewBox="0 0 24 24"><path d="M12 1L2 6v2h20V6L12 1zm-7 9v9h2v-9H5zm4 0v9h2v-9H9zm4 0v9h2v-9h-2zm4 0v9h2v-9h-2zM2 21v2h20v-2H2z"/></svg>`,
@@ -320,116 +319,28 @@
 
         const geoCoordinates = {
             wholeBagumbayan: [
-                [13.145450, 123.713817], // UL
-                [13.145885, 123.714926], // BETWEEN UL AND UR
-                [13.146194, 123.716484], // UR
-                [13.140918, 123.719259], // LR
-                [13.139103, 123.716388], // BM
-                [13.139407, 123.714253], // BL
-                [13.141515, 123.715020]  // ML
+                [13.145450, 123.713817],
+                [13.145885, 123.714926],
+                [13.146194, 123.716484],
+                [13.140918, 123.719259],
+                [13.139103, 123.716388],
+                [13.139407, 123.714253],
+                [13.141515, 123.715020]
             ],
             puroks: [
-                {
-                    name: "Purok 1",
-                    color: "#2563eb",
-                    coords: [
-                        [13.145450, 123.713817], // UL
-                        [13.145719, 123.714509], // UR
-                        [13.144881, 123.714850], // LR
-                        [13.144606, 123.714131]  // LL
-                    ]
-                },
-                {
-                    name: "Purok 2",
-                    color: "#16a34a",
-                    coords: [
-                        [13.144606, 123.714131], // UL
-                        [13.144881, 123.714850], // UR
-                        [13.144004, 123.715183], // LR
-                        [13.143747, 123.714472]  // LL
-                    ]
-                },
-                {
-                    name: "Purok 3",
-                    color: "#d97706",
-                    coords: [
-                        [13.143747, 123.714472], // UL
-                        [13.144004, 123.715183], // UM
-                        [13.143668, 123.715323], // M
-                        [13.143389, 123.716535], // MR
-                        [13.141811, 123.718271], // BR
-                        [13.141515, 123.715020]  // LL
-                    ]
-                },
-                {
-                    name: "Purok 4",
-                    color: "#dc2626",
-                    coords: [
-                        [13.141515, 123.715020], // UM
-                        [13.141610, 123.716118], // UR
-                        [13.140267, 123.717142], // MR
-                        [13.139103, 123.716388], // BR
-                        [13.139407, 123.714253]  // BL
-                    ]
-                },
-                {
-                    name: "Purok 5",
-                    color: "#9333ea",
-                    coords: [
-                        [13.141610, 123.716118], // UR
-                        [13.140267, 123.717142],
-                        [13.139103, 123.716388],
-                        [13.140918, 123.719259], // UL
-                        [13.141961, 123.719005]  // LL
-                    ]
-                },
-                {
-                    name: "Purok 6",
-                    color: "#0891b2",
-                    coords: [
-                        [13.145719, 123.714509], // UL
-                        [13.145885, 123.714926], // NEXT TO UL
-                        [13.146194, 123.716484], // UR
-                        [13.143417, 123.718696], // BMR
-                        [13.141961, 123.719005], // BR
-                        [13.141811, 123.718271], // LL
-                        [13.143389, 123.716535],
-                        [13.143668, 123.715323],
-                        [13.144855, 123.714862]  // B NEXT TO UL
-                    ]
-                }
+                { name: "Purok 1", color: "#2563eb", coords: [[13.145450, 123.713817], [13.145719, 123.714509], [13.144881, 123.714850], [13.144606, 123.714131]] },
+                { name: "Purok 2", color: "#16a34a", coords: [[13.144606, 123.714131], [13.144881, 123.714850], [13.144004, 123.715183], [13.143747, 123.714472]] },
+                { name: "Purok 3", color: "#d97706", coords: [[13.143747, 123.714472], [13.144004, 123.715183], [13.143668, 123.715323], [13.143389, 123.716535], [13.141811, 123.718271], [13.141515, 123.715020]] },
+                { name: "Purok 4", color: "#dc2626", coords: [[13.141515, 123.715020], [13.141610, 123.716118], [13.140267, 123.717142], [13.139103, 123.716388], [13.139407, 123.714253]] },
+                { name: "Purok 5", color: "#9333ea", coords: [[13.141610, 123.716118], [13.140267, 123.717142], [13.139103, 123.716388], [13.140918, 123.719259], [13.141961, 123.719005]] },
+                { name: "Purok 6", color: "#0891b2", coords: [[13.145719, 123.714509], [13.145885, 123.714926], [13.146194, 123.716484], [13.143417, 123.718696], [13.141961, 123.719005], [13.141811, 123.718271], [13.143389, 123.716535], [13.143668, 123.715323], [13.144855, 123.714862]] }
             ],
             landmarks: [
-                { 
-                    name: "Bagumbayan Gymnasium", 
-                    coords: [13.141245, 123.715429],
-                    type: "gymnasium",
-                    color: "#ea580c" // Orange
-                },
-                { 
-                    name: "Barangay Hall", 
-                    coords: [13.141391, 123.715200],
-                    type: "hall",
-                    color: "#059669" // Emerald Green
-                },
-                { 
-                    name: "Barangay Chapel", 
-                    coords: [13.141268, 123.715183],
-                    type: "chapel",
-                    color: "#2563eb" // Blue
-                },
-                { 
-                    name: "Daycare Center", 
-                    coords: [13.141175, 123.715455],
-                    type: "daycare",
-                    color: "#d97706" // Amber
-                },
-                { 
-                    name: "Daraga North Central School", 
-                    coords: [13.144115, 123.715673],
-                    type: "school",
-                    color: "#4f46e5" // Indigo
-                }
+                { name: "Bagumbayan Gymnasium", coords: [13.141245, 123.715429], type: "gymnasium", color: "#ea580c" },
+                { name: "Barangay Hall", coords: [13.141391, 123.715200], type: "hall", color: "#059669" },
+                { name: "Barangay Chapel", coords: [13.141268, 123.715183], type: "chapel", color: "#2563eb" },
+                { name: "Daycare Center", coords: [13.141175, 123.715455], type: "daycare", color: "#d97706" },
+                { name: "Daraga North Central School", coords: [13.144115, 123.715673], type: "school", color: "#4f46e5" }
             ]
         };
 
@@ -440,10 +351,9 @@
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // 1. Whole Bagumbayan Outer Perimeter
         const bagumbayanPolygon = L.polygon(geoCoordinates.wholeBagumbayan, {
             color: "#16372a",
             weight: 3,
@@ -453,7 +363,6 @@
             dashArray: "6, 6"
         }).addTo(map);
 
-        // 2. Individual Purok Overlays with Permanent Labels
         geoCoordinates.puroks.forEach(function (purok) {
             L.polygon(purok.coords, {
                 color: purok.color,
@@ -462,19 +371,13 @@
                 fillColor: purok.color,
                 fillOpacity: 0.28
             })
-            .bindTooltip(purok.name, {
-                permanent: true,
-                direction: "center",
-                className: "purok-map-label"
-            })
+            .bindTooltip(purok.name, { permanent: true, direction: "center", className: "purok-map-label" })
             .bindPopup("<strong>" + purok.name + "</strong><br>Barangay Bagumbayan, Daraga, Albay")
             .addTo(map);
         });
 
-        // 3. Name-Themed Landmark SVG Icons
         geoCoordinates.landmarks.forEach(function (lm) {
             const iconSvg = landmarkIcons[lm.type] || landmarkIcons.hall;
-
             const themedPin = L.divIcon({
                 className: 'custom-landmark-div-icon',
                 html: `<div class="landmark-pin-wrapper" style="background-color: ${lm.color};">${iconSvg}</div>`,
@@ -483,21 +386,13 @@
                 popupAnchor: [0, -32]
             });
 
-            const marker = L.marker(lm.coords, { icon: themedPin }).addTo(map);
-
-            marker.bindPopup(`
-                <div style="font-size: 12px; line-height: 1.4; min-width: 140px;">
-                    <strong style="color: ${lm.color}; font-size: 13px;">${lm.name}</strong><br>
-                    <span style="color: #61726b; font-size: 11px;">Barangay Landmark</span><br>
-                    <span style="font-family: monospace; color: #475569; font-size: 10px;">${lm.coords[0].toFixed(6)}, ${lm.coords[1].toFixed(6)}</span>
-                </div>
-            `);
+            L.marker(lm.coords, { icon: themedPin })
+                .bindPopup(`<strong>${lm.name}</strong><br><span style="color: #61726b; font-size: 11px;">Barangay Landmark</span>`)
+                .addTo(map);
         });
 
-        // 4. Fit view automatically to Barangay boundary
         map.fitBounds(bagumbayanPolygon.getBounds(), { padding: [25, 25] });
 
-        // Responsive map size handler
         window.addEventListener('resize', function () {
             map.invalidateSize();
         });

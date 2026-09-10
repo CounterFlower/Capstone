@@ -14,11 +14,42 @@ class PublicPageController extends Controller
         protected ResidentService $residentService,
     ) {}
 
-    public function home()
+public function home()
     {
+        // 1. All active events from the database
+        $dbEvents = \Illuminate\Support\Facades\DB::table('event')
+            ->orderBy('Event_Date', 'asc')
+            ->get();
+
+        // 2. Events displayed in the top Community Event Gallery (with cover image fallback)
+        $galleryEvents = $dbEvents->take(3)->map(function ($event, $index) {
+            $fallbackFile = ($index + 1) . '.jpg'; // Fallback to 1.jpg, 2.jpg, 3.jpg
+
+            return (object) [
+                'id'          => $event->Event_ID,
+                'title'       => $event->Event_Name,
+                'description' => $event->Description ?? $event->description ?? 'Barangay outreach and resident community program.',
+                'image'       => ! empty($event->Cover_Image) ? $event->Cover_Image : $fallbackFile,
+                'date'        => \Carbon\Carbon::parse($event->Event_Date)->format('M d, Y'),
+                'venue'       => $event->Location ?? 'Barangay Hall',
+            ];
+        });
+
+        // 3. Bulletins / Announcements specifically for the bulletin board
+        $announcements = $dbEvents->map(function ($event) {
+            $formattedDate = \Carbon\Carbon::parse($event->Event_Date)->format('F d, Y \a\t g:i A');
+            $summary = $event->Description ?? $event->description ?? 'Open to all registered residents.';
+
+            return [
+                'title' => $event->Event_Name,
+                'body'  => "Scheduled on {$formattedDate} at {$event->Location}. {$summary}",
+            ];
+        });
+
         return view('public.home', [
-            'events' => $this->prototypeEventService->events(),
-            'photos' => $this->prototypeEventService->photoGallery(),
+            'galleryEvents' => $galleryEvents,
+            'events'        => $dbEvents,
+            'announcements' => $announcements,
         ]);
     }
 

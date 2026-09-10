@@ -22,10 +22,12 @@ class StoreEventRegistrationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'resident_name' => ['required', 'string', 'max:120'],
-            'contact_number' => ['required', 'string', 'max:30'],
-            'purok' => ['required', 'string', 'max:60'],
-            'event_id' => ['required', 'string'],
+            'event_id'       => ['required'],
+            'first_name'     => ['required', 'string', 'max:120'],
+            'middle_name'    => ['nullable', 'string', 'max:120'],
+            'last_name'      => ['required', 'string', 'max:120'],
+            'contact_number' => ['nullable', 'string', 'max:30'],
+            'purok'          => ['nullable', 'string', 'max:60'],
         ];
     }
 }

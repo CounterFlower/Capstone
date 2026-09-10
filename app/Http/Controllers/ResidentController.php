@@ -6,6 +6,7 @@ use App\Services\ResidentService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use RuntimeException;
+use Illuminate\Support\Facades\DB;
 
 class ResidentController extends Controller
 {
@@ -147,4 +148,20 @@ class ResidentController extends Controller
             'tab' => $request->input('active_tab', 'residents'),
         ])->withErrors([$key => $message])->withInput();
     }
+   public function updateDocumentStatus(Request $request)
+{
+    $validated = $request->validate([
+        'request_id' => ['required', 'integer'],
+        'status'     => ['required', 'string', 'in:Pending,Not Approved,Released'],
+    ]);
+
+    \DB::table('document_request')
+        ->where('Request_ID', $validated['request_id'])
+        ->update([
+            'Status' => $validated['status'],
+        ]);
+
+    return redirect()->route('admin.dashboard', ['tab' => 'requests'])
+        ->with('status', 'Document request status updated successfully.');
+}
 }

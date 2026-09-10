@@ -12,6 +12,17 @@
 </header>
 
 <div class="card" style="max-width: 680px; margin: 0 auto;">
+    @if ($errors->any())
+        <div style="padding: 12px 16px; background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; border-radius: 8px; margin-bottom: 16px; font-size: 0.88rem;">
+            <strong>Please correct the following:</strong>
+            <ul style="margin: 6px 0 0 16px; padding: 0;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('admin.events.update', $event->Event_ID) }}" enctype="multipart/form-data" style="display: grid; gap: 16px;">
         @csrf
         @method('PUT')
@@ -47,15 +58,16 @@
             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;">Cover Image</label>
             @if ($event->Cover_Image)
                 <div style="margin-bottom: 8px;">
-                    <img src="{{ asset('uploads/events/' . $event->Cover_Image) }}" alt="Current Cover" style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <img src="{{ route('public.photos', ['filename' => $event->Cover_Image]) }}" alt="Current Cover" style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 </div>
             @endif
             <input type="file" name="cover_image" accept="image/*" style="width: 100%; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; background: #f8fafc;">
+            <small style="color: #64748b; font-size: 0.75rem;">Leave empty to keep the existing cover photo.</small>
         </div>
 
         <div>
             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;">Summary / Description</label>
-            <textarea name="summary" rows="4" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">{{ old('summary', $event->Summary) }}</textarea>
+            <textarea name="summary" rows="4" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">{{ old('summary', $event->Description ?? $event->description ?? $event->Summary ?? '') }}</textarea>
         </div>
 
         <button type="submit" style="background: #2563eb; color: #ffffff; border: 0; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">

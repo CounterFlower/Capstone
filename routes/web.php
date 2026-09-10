@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\ResidentController;
 use Illuminate\Support\Facades\File;
@@ -10,13 +11,24 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/photos/{filename}', function (string $filename) {
     $safeFilename = basename($filename);
-    $path = resource_path('photos/'.$safeFilename);
 
-    abort_unless(File::exists($path), 404);
+    // 1. Check if it's an uploaded event photo
+    $uploadPath = public_path('uploads/events/'.$safeFilename);
+    if (File::exists($uploadPath)) {
+        return response()->file($uploadPath, [
+            'Content-Type' => File::mimeType($uploadPath),
+        ]);
+    }
 
-    return response()->file($path, [
-        'Content-Type' => File::mimeType($path),
-    ]);
+    // 2. Check fallback/static photos in resources/photos
+    $resourcePath = resource_path('photos/'.$safeFilename);
+    if (File::exists($resourcePath)) {
+        return response()->file($resourcePath, [
+            'Content-Type' => File::mimeType($resourcePath),
+        ]);
+    }
+
+    abort(404);
 })->where('filename', '.*')->name('public.photos');
 
 Route::get('/', [PublicPageController::class, 'home'])->name('home');
@@ -25,7 +37,9 @@ Route::post('/incident-reporting', [PublicPageController::class, 'submitIncident
 Route::get('/document-requests', [PublicPageController::class, 'documents'])->name('public.documents');
 Route::post('/document-requests', [PublicPageController::class, 'submitDocumentRequest'])->name('public.documents.submit');
 Route::get('/event-registration', [PublicPageController::class, 'events'])->name('public.events');
-Route::post('/event-registration', [PublicPageController::class, 'submitEventRegistration'])->name('public.events.submit');
+
+// --- Pointed to EventRegistrationController ---
+Route::post('/event-registration', [EventRegistrationController::class, 'store'])->name('public.events.submit');
 
 Route::get('/admin/login', [AdminAuthController::class, 'loginForm'])->name('admin.login');
 Route::get('/admin/register', [AdminAuthController::class, 'registerForm'])->name('admin.register');
@@ -49,3 +63,4 @@ Route::patch('/admin/incidents/{incident_id}/status', [AdminController::class, '
 
 Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
+Route::post('/admin/document-requests/status', [ResidentController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
