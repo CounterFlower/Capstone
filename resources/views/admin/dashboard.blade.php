@@ -616,16 +616,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569;">
                         <th style="padding: 12px 10px;">Req ID</th>
                         <th style="padding: 12px 10px;">Resident Name</th>
+                        <th style="padding: 12px 10px;">Birthday</th>
+                        <th style="padding: 12px 10px;">Address</th>
+                        <th style="padding: 12px 10px; text-align: center;">Years Stayed</th>
                         <th style="padding: 12px 10px;">Document Type</th>
                         <th style="padding: 12px 10px;">Purpose</th>
-                        <th style="padding: 12px 10px;">Purok</th>
                         <th style="padding: 12px 10px;">Requested On</th>
                         <th style="padding: 12px 10px; text-align: center;">Status</th>
                         <th style="padding: 12px 10px; text-align: center;">Update Status</th>
+                        <th style="padding: 12px 10px; text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($pendingDocumentRequests as $doc)
+                    @php
+                        $docList = $pendingDocumentRequests ?? [];
+                    @endphp
+
+                    @forelse ($docList as $doc)
                         @php
                             $status = $doc->Status ?? 'Pending';
                             $statusStyles = [
@@ -634,30 +641,39 @@ document.addEventListener('DOMContentLoaded', function () {
                                 'Not Approved' => 'background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;',
                             ];
                             $badgeStyle = $statusStyles[$status] ?? 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;';
+                            $reqId = $doc->Request_ID ?? $doc->id;
+                            $reqDate = $doc->Date_Requested ?? $doc->Request_Date ?? $doc->created_at ?? null;
+                            $birthday = $doc->birthday ?? $doc->Date_of_Birth ?? null;
+                            $address = $doc->full_address ?? $doc->Address ?? 'Barangay Bagumbayan, Daraga, Albay';
+                            $years = $doc->Years_Stayed ?? $doc->years_stayed ?? '—';
                         @endphp
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 12px 10px; font-weight: 700; color: #1e293b; white-space: nowrap;">
-                                #DOC-{{ str_pad($doc->Request_ID ?? $doc->id, 3, '0', STR_PAD_LEFT) }}
+                                #DOC-{{ str_pad($reqId, 3, '0', STR_PAD_LEFT) }}
                             </td>
                             <td style="padding: 12px 10px; font-weight: 600; color: #0f172a;">
                                 {{ $doc->resident_name ?? 'N/A' }}
-                                @if(!empty($doc->contact))
-                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 400;">{{ $doc->contact }}</div>
+                                @if(!empty($doc->contact ?? $doc->Contact_Number ?? null))
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 400;">{{ $doc->contact ?? $doc->Contact_Number }}</div>
                                 @endif
                             </td>
-                            <td style="padding: 12px 10px; font-weight: 600; color: #334155;">
+                            <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+                                {{ !empty($birthday) ? \Carbon\Carbon::parse($birthday)->format('M d, Y') : '—' }}
+                            </td>
+                            <td style="padding: 12px 10px; color: #475569; max-width: 180px;">
+                                {{ $address }}
+                            </td>
+                            <td style="padding: 12px 10px; color: #475569; text-align: center; white-space: nowrap;">
+                                {{ is_numeric($years) ? $years . ' ' . \Illuminate\Support\Str::plural('yr', $years) : $years }}
+                            </td>
+                            <td style="padding: 12px 10px; font-weight: 600; color: #334155; white-space: nowrap;">
                                 {{ $doc->document_name ?? $doc->Document_Type ?? 'Barangay Document' }}
                             </td>
-                            <td style="padding: 12px 10px; color: #475569; max-width: 200px;">
+                            <td style="padding: 12px 10px; color: #475569; max-width: 180px;">
                                 {{ $doc->Purpose ?? $doc->purpose ?? 'General Use' }}
-                            </td><td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
-    @php
-        $purokVal = $doc->purok ?? $doc->Purok_Number ?? $doc->Purok ?? null;
-    @endphp
-    {{ $purokVal ? 'Purok ' . $purokVal : '—' }}
-</td>
+                            </td>
                             <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
-                                {{ !empty($doc->Request_Date) ? \Carbon\Carbon::parse($doc->Request_Date)->format('M d, Y h:i A') : '—' }}
+                                {{ !empty($reqDate) ? \Carbon\Carbon::parse($reqDate)->format('M d, Y h:i A') : '—' }}
                             </td>
                             <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
                                 <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; {{ $badgeStyle }}">
@@ -667,8 +683,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
                                 <form action="{{ route('admin.documents.update-status') }}" method="POST" style="display: inline-flex; gap: 4px; align-items: center;">
                                     @csrf
-                                    <input type="hidden" name="request_id" value="{{ $doc->Request_ID ?? $doc->id }}">
-                                    
+                                    <input type="hidden" name="request_id" value="{{ $reqId }}">
+
                                     @if ($status !== 'Pending')
                                         <button type="submit" name="status" value="Pending" style="background: #eab308; color: #fff; border: 0; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; font-weight: 600; cursor: pointer;">
                                             Pending
@@ -688,10 +704,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @endif
                                 </form>
                             </td>
+                            <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
+                                <a href="{{ route('admin.documents.print', $reqId) }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; background: #0284c7; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                                    🖨️ Print
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" style="padding: 32px; text-align: center; color: #94a3b8; font-style: italic;">
+                            <td colspan="11" style="padding: 32px; text-align: center; color: #94a3b8; font-style: italic;">
                                 No document requests submitted yet.
                             </td>
                         </tr>
@@ -703,198 +724,223 @@ document.addEventListener('DOMContentLoaded', function () {
 </section>
 
     <!-- EVENTS TAB -->
-    <section class="tab-panel {{ ($activeTab ?? 'overview') === 'events' ? 'active' : '' }}" data-tab-panel="events">
-        <section class="panels">
-            <!-- Create Event Card -->
-<article class="card">
-    <h2>Schedule New Activity</h2>
-    @if (session('status'))
-        <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
-    @endif
-    <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
-        @csrf
-        <input type="hidden" name="active_tab" value="events">
-        <div class="form-grid">
-            <label class="form-field">Event title
-                <input name="event_name" value="{{ old('event_name') }}" placeholder="e.g. Barangay Clean-up Drive" required>
-            </label>
-            <label class="form-field">Venue
-                <input name="location" value="{{ old('location') }}" placeholder="e.g. Covered Court" required>
-            </label>
-            <label class="form-field">Start date & time
-                <input type="datetime-local" name="event_date" value="{{ old('event_date') }}" required>
-            </label>
-            <label class="form-field">End date & time <span style="font-weight: 400; color: var(--muted);">(optional)</span>
-                <input type="datetime-local" name="end_date" value="{{ old('end_date') }}">
-            </label>
-            <label class="form-field">Available slots
-                <input type="number" name="available_slots" min="1" value="{{ old('available_slots', 50) }}" placeholder="e.g. 50" required>
-            </label>
-            <label class="form-field">Cover image <span style="font-weight: 400; color: var(--muted);">(optional)</span>
-                <input type="file" name="cover_image" accept="image/*">
-            </label>
-        </div>
-        <label class="form-field" style="margin-top: 16px; display: block;">Summary
-            <textarea name="summary" rows="3" placeholder="Brief event description">{{ old('summary') }}</textarea>
-        </label>
-        @if ($errors->any())
-            <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
-        @endif
-        <button type="submit" class="form-submit" style="margin-top: 16px;">Save & Publish Event</button>
-    </form>
-</article>
+   <section class="tab-panel {{ in_array(($activeTab ?? 'overview'), ['events', 'events-attendees']) ? 'active' : '' }}" data-tab-panel="events">
+    <!-- 1. UPPER PART: Public Activity Attendance / Enlisted Residents Log -->
+    <article class="card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <div>
+                <p class="eyebrow" style="margin: 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Public Activity Attendance</p>
+                <h2 style="margin: 4px 0 0 0; font-size: 1.35rem;">Enlisted Residents / RSVPs</h2>
+            </div>
 
-            <!-- Scheduled Activities Table with Live Slots & Actions -->
-            <article class="card">
-                <h2>Scheduled Activities</h2>
-                <p class="subtext" style="margin-bottom: 16px;">Scheduled barangay activities and live registration counts.</p>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Event ID</th>
-                                <th>Title</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Venue</th>
-                                <th style="text-align: center;">Slots Filled</th>
-                                <th style="text-align: center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($events as $event)
-                                @php
-                                    $eventId = $event->Event_ID ?? $event->id ?? null;
-                                    $title = $event->Event_Name ?? $event->title ?? 'Untitled Event';
-                                    $venue = $event->Location ?? $event->venue ?? 'TBA';
-                                    $capacity = (int)($event->Available_Slots ?? $event->available_slots ?? 0);
-                                    $registered = (int)($event->registered_count ?? 0);
-                                    
-                                    // Format Start
-                                    $startDate = $event->Event_Date ? Carbon::parse($event->Event_Date)->format('M d, Y') : ($event->date ?? 'N/A');
-                                    $startTime = $event->Event_Date ? Carbon::parse($event->Event_Date)->format('g:i A') : ($event->time ? Carbon::parse($event->time)->format('g:i A') : '');
-                                    
-                                    // Format End
-                                    $endDate = !empty($event->End_Date) ? Carbon::parse($event->End_Date)->format('M d, Y') : (!empty($event->end_date) ? Carbon::parse($event->end_date)->format('M d, Y') : null);
-                                    $endTime = !empty($event->End_Date) ? Carbon::parse($event->End_Date)->format('g:i A') : (!empty($event->end_time) ? Carbon::parse($event->end_time)->format('g:i A') : null);
-
-                                    $isFull = $capacity > 0 && $registered >= $capacity;
-                                @endphp
-                                <tr>
-                                    <td><strong>#EV-{{ str_pad($eventId, 3, '0', STR_PAD_LEFT) }}</strong></td>
-                                    <td><strong>{{ $title }}</strong></td>
-                                    <td>{{ $startDate }} {{ $startTime ? 'at '.$startTime : '' }}</td>
-                                    <td>{{ $endDate ? $endDate . ($endTime ? ' at '.$endTime : '') : ($endTime ? 'Until '.$endTime : '—') }}</td>
-                                    <td>{{ $venue }}</td>
-                                    <td style="text-align: center;">
-                                        <span class="badge {{ $isFull ? 'alert' : 'good' }}">
-                                            {{ $registered }} / {{ $capacity }}
-                                        </span>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <div style="display: inline-flex; gap: 8px;">
-                                            <a href="{{ route('admin.events.edit', $eventId) }}" class="button secondary" style="padding: 6px 12px; font-size: 0.78rem;">
-                                                Edit
-                                            </a>
-                                            <form method="POST" action="{{ route('admin.events.destroy', $eventId) }}" onsubmit="return confirm('Delete this event?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <input type="hidden" name="active_tab" value="events">
-                                                <button type="submit" class="form-submit" style="padding: 6px 12px; background: #b45142; color: #fff; font-size: 0.78rem;">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" style="text-align: center; color: var(--muted); padding: 20px;">No events scheduled yet.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </article>
-
-            <!-- Event Sign-ups Log -->
-            <article class="card" style="margin-top: 24px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-        <div>
-            <p class="eyebrow">Public Activity Attendance</p>
-            <h3>Enlisted Residents / RSVPs</h3>
-        </div>
-
-        <!-- Filter by Event Dropdown -->
-        <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 8px; align-items: center;">
-            <input type="hidden" name="tab" value="events-attendees">
-            
-            <label for="event_filter" style="font-weight: 600; font-size: 0.9rem;">Filter Event:</label>
-            <select name="event_filter" id="event_filter" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(22, 48, 36, 0.2); font: inherit;">
-                <option value="">-- All Events ({{ $eventRegistrations->count() }}) --</option>
-                @foreach ($eventsList as $evt)
-                    <option value="{{ $evt->Event_ID }}" {{ (string)$selectedEventFilter === (string)$evt->Event_ID ? 'selected' : '' }}>
-                        {{ $evt->Event_Name }} ({{ $evt->Event_Date }})
-                    </option>
-                @endforeach
-            </select>
-
-            @if ($selectedEventFilter)
-                <a href="{{ route('admin.dashboard', ['tab' => 'events-attendees']) }}" class="button secondary" style="padding: 6px 12px; font-size: 0.85rem;">Clear</a>
-            @endif
-        </form>
-    </div>
-
-    @if ($eventRegistrations->isEmpty())
-        <p style="color: var(--muted); font-style: italic; margin-top: 12px;">No residents have enlisted for this activity yet.</p>
-    @else
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid rgba(22, 48, 36, 0.1); color: var(--muted);">
-                        <th style="padding: 10px;">Resident Name</th>
-                        <th style="padding: 10px;">Event Enlisted</th>
-                        <th style="padding: 10px;">Purok / Address</th>
-                        <th style="padding: 10px;">Contact Number</th>
-                        <th style="padding: 10px;">Enlisted At</th>
-                        <th style="padding: 10px;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($eventRegistrations as $reg)
-                        <tr style="border-bottom: 1px solid rgba(22, 48, 36, 0.06);">
-                            <td style="padding: 12px 10px; font-weight: 600;">
-                                {{ $reg->Last_Name }}, {{ $reg->First_Name }} {{ $reg->Middle_Name ?? '' }}
-                            </td>
-                            <td style="padding: 12px 10px;">
-                                <strong>{{ $reg->Event_Name }}</strong><br>
-                                <span style="font-size: 0.8rem; color: var(--muted);">{{ $reg->Event_Date }}</span>
-                            </td>
-                            <td style="padding: 12px 10px;">
-                                {{ $reg->Zone_Purok ?? 'Unassigned' }}
-                                @if ($reg->House_Number)
-                                    <small style="color: var(--muted);">({{ $reg->House_Number }})</small>
-                                @endif
-                            </td>
-                            <td style="padding: 12px 10px;">
-                                {{ $reg->Contact_Number ?? 'N/A' }}
-                            </td>
-                            <td style="padding: 12px 10px; font-size: 0.85rem; color: var(--muted);">
-                                {{ \Carbon\Carbon::parse($reg->Date_Registered)->format('M d, Y h:i A') }}
-                            </td>
-                            <td style="padding: 12px 10px;">
-                                <span style="display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; background: rgba(45, 124, 84, 0.12); color: var(--success);">
-                                    {{ $reg->Attendance_Status }}
-                                </span>
-                            </td>
-                        </tr>
+            <!-- Filter by Event Dropdown -->
+            <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 8px; align-items: center;">
+                <input type="hidden" name="tab" value="events">
+                
+                <label for="event_filter" style="font-weight: 600; font-size: 0.85rem; color: #475569;">Filter Event:</label>
+                <select name="event_filter" id="event_filter" onchange="this.form.submit()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font: inherit; font-size: 0.85rem; background: #fff;">
+                    <option value="">-- All Events ({{ $eventRegistrations->count() }}) --</option>
+                    @foreach ($eventsList as $evt)
+                        <option value="{{ $evt->Event_ID }}" {{ (string)$selectedEventFilter === (string)$evt->Event_ID ? 'selected' : '' }}>
+                            {{ $evt->Event_Name }} ({{ \Carbon\Carbon::parse($evt->Event_Date)->format('M d, Y') }})
+                        </option>
                     @endforeach
-                </tbody>
-            </table>
+                </select>
+
+                @if ($selectedEventFilter)
+                    <a href="{{ route('admin.dashboard', ['tab' => 'events']) }}" class="button secondary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; text-decoration: none; color: #ef4444; border: 1px solid #fca5a5;">
+                        Clear
+                    </a>
+                @endif
+            </form>
         </div>
-    @endif
-</article>
-        </section>
+
+        @if ($eventRegistrations->isEmpty())
+            <p style="color: #94a3b8; font-style: italic; margin-top: 12px; padding: 20px; text-align: center;">No residents have enlisted for this activity yet.</p>
+        @else
+            <div style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; color: #475569;">
+                            <th style="padding: 10px;">Name</th>
+                            <th style="padding: 10px;">Birthday</th>
+                            <th style="padding: 10px; text-align: center;">Age</th>
+                            <th style="padding: 10px;">Event Enlisted</th>
+                            <th style="padding: 10px;">Purok</th>
+                            <th style="padding: 10px;">Address</th>
+                            <th style="padding: 10px;">Contact Number</th>
+                            <th style="padding: 10px;">Enlisted At</th>
+                            <th style="padding: 10px; text-align: center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($eventRegistrations as $reg)
+                            @php
+                                $bday = !empty($reg->Date_of_Birth) ? \Carbon\Carbon::parse($reg->Date_of_Birth) : null;
+                                $age = $bday ? $bday->age : '—';
+                                $purok = $reg->Zone_Purok ?? 'Purok 1';
+                                $houseNum = $reg->House_Number ? '#'.$reg->House_Number.', ' : '';
+                                $fullAddress = $houseNum . $purok . ', Bagumbayan, Daraga, Albay';
+                            @endphp
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 12px 10px; font-weight: 600; color: #0f172a; white-space: nowrap;">
+                                    {{ $reg->Last_Name }}, {{ $reg->First_Name }} {{ $reg->Middle_Name ?? '' }}
+                                </td>
+                                <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+                                    {{ $bday ? $bday->format('M d, Y') : '—' }}
+                                </td>
+                                <td style="padding: 12px 10px; text-align: center; color: #334155; font-weight: 600;">
+                                    {{ $age }}
+                                </td>
+                                <td style="padding: 12px 10px; color: #1e293b;">
+                                    <strong>{{ $reg->Event_Name }}</strong><br>
+                                    <span style="font-size: 0.78rem; color: #64748b;">{{ \Carbon\Carbon::parse($reg->Event_Date)->format('M d, Y g:i A') }}</span>
+                                </td>
+                                <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+                                    {{ $purok }}
+                                </td>
+                                <td style="padding: 12px 10px; color: #475569; max-width: 200px;">
+                                    {{ $fullAddress }}
+                                </td>
+                                <td style="padding: 12px 10px; color: #475569; white-space: nowrap;">
+                                    {{ $reg->Contact_Number ?? 'N/A' }}
+                                </td>
+                                <td style="padding: 12px 10px; font-size: 0.82rem; color: #64748b; white-space: nowrap;">
+                                    {{ \Carbon\Carbon::parse($reg->Date_Registered)->format('M d, Y h:i A') }}
+                                </td>
+                                <td style="padding: 12px 10px; text-align: center; white-space: nowrap;">
+                                    <span style="display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;">
+                                        {{ $reg->Attendance_Status ?? 'Confirmed' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </article>
+
+    <!-- 2. LOWER PART: Schedule New Activity & Manage Scheduled Activities -->
+    <section class="panels" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+        <!-- Schedule New Activity Card -->
+        <article class="card">
+            <h2 style="font-size: 1.25rem; margin-bottom: 8px;">Schedule New Activity</h2>
+            <p class="subtext" style="color: #64748b; font-size: 0.85rem; margin-bottom: 16px;">Publish a new barangay assembly, vaccination drive, or outreach program.</p>
+            
+            @if (session('status'))
+                <p class="badge good" style="margin-bottom: 16px;">{{ session('status') }}</p>
+            @endif
+
+            <form class="admin-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="active_tab" value="events">
+                <div class="form-grid">
+                    <label class="form-field">Event title
+                        <input name="event_name" value="{{ old('event_name') }}" placeholder="e.g. Barangay Clean-up Drive" required>
+                    </label>
+                    <label class="form-field">Venue
+                        <input name="location" value="{{ old('location') }}" placeholder="e.g. Covered Court" required>
+                    </label>
+                    <label class="form-field">Start date & time
+                        <input type="datetime-local" name="event_date" value="{{ old('event_date') }}" required>
+                    </label>
+                    <label class="form-field">End date & time <span style="font-weight: 400; color: var(--muted);">(optional)</span>
+                        <input type="datetime-local" name="end_date" value="{{ old('end_date') }}">
+                    </label>
+                    <label class="form-field">Available slots
+                        <input type="number" name="available_slots" min="1" value="{{ old('available_slots', 50) }}" placeholder="e.g. 50" required>
+                    </label>
+                    <label class="form-field">Cover image <span style="font-weight: 400; color: var(--muted);">(optional)</span>
+                        <input type="file" name="cover_image" accept="image/*">
+                    </label>
+                </div>
+                <label class="form-field" style="margin-top: 16px; display: block;">Summary
+                    <textarea name="summary" rows="3" placeholder="Brief event description">{{ old('summary') }}</textarea>
+                </label>
+                @if ($errors->any())
+                    <div class="badge alert" style="margin-top: 16px;">{{ $errors->first() }}</div>
+                @endif
+                <button type="submit" class="form-submit" style="margin-top: 16px;">Save & Publish Event</button>
+            </form>
+        </article>
+
+        <!-- Scheduled Activities Table (Edit / Delete) -->
+        <article class="card">
+            <h2 style="font-size: 1.25rem; margin-bottom: 8px;">Scheduled Activities</h2>
+            <p class="subtext" style="color: #64748b; font-size: 0.85rem; margin-bottom: 16px;">Active programs, live slots filled, and event modifications.</p>
+            <div class="table-wrap" style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; text-align: left;">
+                            <th style="padding: 10px;">ID</th>
+                            <th style="padding: 10px;">Title</th>
+                            <th style="padding: 10px;">Schedule</th>
+                            <th style="padding: 10px;">Venue</th>
+                            <th style="padding: 10px; text-align: center;">Slots</th>
+                            <th style="padding: 10px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($events as $event)
+                            @php
+                                $eventId = $event->Event_ID ?? $event->id ?? null;
+                                $title = $event->Event_Name ?? $event->title ?? 'Untitled Event';
+                                $venue = $event->Location ?? $event->venue ?? 'TBA';
+                                $capacity = (int)($event->Available_Slots ?? $event->available_slots ?? 0);
+                                $registered = (int)($event->registered_count ?? 0);
+                                
+                                $startDate = $event->Event_Date ? \Carbon\Carbon::parse($event->Event_Date)->format('M d, Y') : ($event->date ?? 'N/A');
+                                $startTime = $event->Event_Date ? \Carbon\Carbon::parse($event->Event_Date)->format('g:i A') : (!empty($event->time) ? \Carbon\Carbon::parse($event->time)->format('g:i A') : '');
+                                
+                                $isFull = $capacity > 0 && $registered >= $capacity;
+                            @endphp
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 10px; font-weight: 700; color: #1e293b;">
+                                    #EV-{{ str_pad($eventId, 3, '0', STR_PAD_LEFT) }}
+                                </td>
+                                <td style="padding: 10px; font-weight: 600; color: #0f172a;">
+                                    {{ $title }}
+                                </td>
+                                <td style="padding: 10px; color: #475569; white-space: nowrap;">
+                                    {{ $startDate }}<br><small style="color: #64748b;">{{ $startTime }}</small>
+                                </td>
+                                <td style="padding: 10px; color: #475569;">
+                                    {{ $venue }}
+                                </td>
+                                <td style="padding: 10px; text-align: center; white-space: nowrap;">
+                                    <span class="badge {{ $isFull ? 'alert' : 'good' }}" style="padding: 3px 8px; border-radius: 6px; font-size: 0.75rem;">
+                                        {{ $registered }} / {{ $capacity }}
+                                    </span>
+                                </td>
+                                <td style="padding: 10px; text-align: center; white-space: nowrap;">
+                                    <div style="display: inline-flex; gap: 6px;">
+                                        <a href="{{ route('admin.events.edit', $eventId) }}" class="button secondary" style="padding: 4px 10px; font-size: 0.75rem;">
+                                            Edit
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.events.destroy', $eventId) }}" onsubmit="return confirm('Delete this event?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="active_tab" value="events">
+                                            <button type="submit" class="form-submit" style="padding: 4px 10px; background: #b45142; color: #fff; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer;">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No events scheduled yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+</section>
+</section>
     </section>
 
 

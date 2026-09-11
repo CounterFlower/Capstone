@@ -285,19 +285,21 @@ class ResidentService
         ];
     }
 
-    public function getPendingDocumentRequests()
+   public function getPendingDocumentRequests()
     {
-        $purokExpr = 'NULL';
-        if (Schema::hasColumn('resident', 'Purok')) {
-            $purokExpr = 'resident.Purok';
+        // 1. Detect Address / Purok column
+        $addressExpr = 'NULL';
+        if (Schema::hasColumn('resident', 'Address')) {
+            $addressExpr = 'resident.Address';
+        } elseif (Schema::hasColumn('resident', 'Purok')) {
+            $addressExpr = "CONCAT('Purok ', resident.Purok, ', Bagumbayan, Daraga, Albay')";
         } elseif (Schema::hasColumn('resident', 'Purok_Number')) {
-            $purokExpr = 'resident.Purok_Number';
+            $addressExpr = "CONCAT('Purok ', resident.Purok_Number, ', Bagumbayan, Daraga, Albay')";
         } elseif (Schema::hasColumn('resident', 'Zone')) {
-            $purokExpr = 'resident.Zone';
-        } elseif (Schema::hasColumn('resident', 'Address')) {
-            $purokExpr = 'resident.Address';
+            $addressExpr = "CONCAT('Zone ', resident.Zone, ', Bagumbayan, Daraga, Albay')";
         }
 
+        // 2. Detect Contact column
         $contactExpr = 'NULL';
         if (Schema::hasColumn('resident', 'Contact_Number')) {
             $contactExpr = 'resident.Contact_Number';
@@ -311,7 +313,8 @@ class ResidentService
             ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
             ->select([
                 'document_request.*',
-                DB::raw("{$purokExpr} as purok"),
+                'resident.Date_of_Birth as birthday',
+                DB::raw("{$addressExpr} as full_address"),
                 DB::raw("{$contactExpr} as contact"),
                 DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
             ])

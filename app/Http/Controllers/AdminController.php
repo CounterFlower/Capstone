@@ -8,6 +8,7 @@ use App\Services\PrototypeEventService;
 use App\Services\ResidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -17,12 +18,37 @@ class AdminController extends Controller
         protected ResidentRepository $residentRepository
     ) {}
 
+    /**
+     * Display the main administrative dashboard.
+     */
     public function dashboard(Request $request)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
         }
 
+        // --- 2-Minute Inactivity Timeout Check ---
+        $lastActivity = session('admin_last_activity');
+        $timeoutSeconds = 120; // 2 minutes
+
+        if ($lastActivity && (time() - $lastActivity > $timeoutSeconds)) {
+            $request->session()->forget([
+                'is_admin',
+                'admin_user_id',
+                'admin_username',
+                'admin_full_name',
+                'admin_role',
+                'admin_last_activity',
+            ]);
+
+            return redirect()->route('admin.login')
+                ->with('status', 'You have been logged out due to 2 minutes of inactivity.');
+        }
+
+        // Keep session timestamp refreshed on active navigation
+        session(['admin_last_activity' => time()]);
+
+        // Retrieve service dashboard analytics (includes rates and Chart.js datasets)
         $dashboardData = $this->residentService->getDashboardData();
 
         // 1. Events list with aggregated registration count
@@ -58,14 +84,18 @@ class AdminController extends Controller
         // 3. Enlisted residents retrieved via repository
         $eventRegistrations = $this->residentRepository->getEventRegistrations($selectedEventFilter);
 
-        // Merge $dashboardData so all chart datasets and metric percentages pass through to the Blade view
+        // Keep active tab on 'events' if event_filter is applied or tab is requested
+        $activeTab = $request->filled('event_filter')
+            ? 'events'
+            : $request->query('tab', 'overview');
+
         return view('admin.dashboard', array_merge($dashboardData, [
             'caseRecords'         => $this->residentService->getIncidentCases(),
             'events'              => $events,
             'eventsList'          => $events,
             'eventRegistrations'  => $eventRegistrations,
             'selectedEventFilter' => $selectedEventFilter,
-            'activeTab'           => $request->query('tab', 'overview'),
+            'activeTab'           => $activeTab,
         ]));
     }
 
@@ -121,5 +151,73 @@ class AdminController extends Controller
 
         return redirect()->route('admin.incidents.review', $incident_id)
             ->with('status', 'Case status updated successfully to ' . $payload['status'] . '.');
+    }
+
+    /**
+     * Show admin login form (GET: /admin/login)
+     */
+    public function showLoginForm()
+    {
+        if (session('is_admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return view('admin.login');
+    }
+
+    /**
+     * Authenticate admin / staff user (POST: /admin/login)
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = DB::table('system_user')
+            ->where('Username', $credentials['username'])
+            ->where('Is_Active', 1)
+            ->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->Password_Hash)) {
+            return back()->withErrors(['username' => 'Invalid credentials or inactive account.'])->withInput();
+        }
+
+        // Initialize credentials and the 2-minute activity timer
+        session([
+            'is_admin'            => true,
+            'admin_user_id'       => $user->User_ID,
+            'admin_username'      => $user->Username,
+            'admin_full_name'     => $user->Full_Name,
+            'admin_role'          => $user->Role,
+            'admin_last_activity' => time(),
+        ]);
+
+        return redirect()->route('admin.dashboard');
+    }
+
+    /**
+     * Log out admin user (POST or GET: /admin/logout)
+     */
+    public function logout(Request $request)
+    {
+        $request->session()->forget([
+            'is_admin',
+            'admin_user_id',
+            'admin_username',
+            'admin_full_name',
+            'admin_role',
+            'admin_last_activity',
+        ]);
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $message = $request->query('reason') === 'inactivity'
+            ? 'Logged out automatically after 2 minutes of inactivity.'
+            : 'You have been successfully logged out.';
+
+        return redirect()->route('admin.login')->with('status', $message);
     }
 }

@@ -325,5 +325,32 @@
             @yield('content')
         </main>
     </div>
+    <script>
+(function() {
+    const INACTIVITY_LIMIT_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+    let timeoutId;
+
+    const logoutUrl = "{{ route('admin.login') }}";
+
+    function performAutoLogout() {
+        // Create an automated logout request or redirect with notice
+        window.location.href = logoutUrl + '?reason=inactivity';
+    }
+
+    function resetTimer() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(performAutoLogout, INACTIVITY_LIMIT_MS);
+    }
+
+    // User interaction events that reset the 2-minute timer
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    activityEvents.forEach(function(event) {
+        window.addEventListener(event, resetTimer, { passive: true });
+    });
+
+    // Start timer on page load
+    resetTimer();
+})();
+</script>
 </body>
 </html>

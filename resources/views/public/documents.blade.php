@@ -10,28 +10,43 @@
             <a class="button secondary" href="{{ route('home') }}">Back to Home</a>
         </div>
 
-        <div class="service-grid">
-            <article class="service-card">
+        <!-- Document Type Selector Cards -->
+        <div class="service-grid" id="document-selector-grid" style="cursor: pointer;">
+            <article class="service-card doc-tab-btn" 
+                     data-doctype="Barangay Clearance" 
+                     style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Barangay Clearance</h3>
-                <p>General-purpose certification for local records and transactions.</p>
+                <p>General-purpose certification for local records, employment, and legal transactions.</p>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
-            <article class="service-card">
+
+            <article class="service-card doc-tab-btn" 
+                     data-doctype="Certificate of Residency" 
+                     style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Certificate of Residency</h3>
-                <p>Proof of current residence within Barangay Bagumbayan.</p>
+                <p>Proof of bona fide residency within Barangay Bagumbayan for utility or bank requirements.</p>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
-            <article class="service-card">
+
+            <article class="service-card doc-tab-btn" 
+                     data-doctype="Business Endorsement" 
+                     style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Business Endorsement</h3>
-                <p>Prototype request type for small business-related endorsements.</p>
+                <p>Barangay endorsement and clearances for micro-enterprises, sari-sari stores, and permits.</p>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
         </div>
 
-        <section class="section">
+        <!-- Form Section -->
+        <section class="section" id="request-slip-section" style="margin-top: 24px;">
             <div class="content-grid request-layout">
                 <article class="card form-card">
-                    <div class="card-header">
+                    <div class="card-header" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 20px;">
                         <div>
-                            <p class="eyebrow compact">Barangay Clearance / Request Form</p>
-                            <h3>Resident Request Slip</h3>
+                            <p class="eyebrow compact">Official Request Slip</p>
+                            <h3 id="dynamic-doc-title" style="margin: 4px 0 0; color: #15803d; font-size: 1.35rem;">
+                                Requesting: Barangay Clearance
+                            </h3>
                         </div>
                     </div>
 
@@ -45,6 +60,9 @@
 
                     <form method="POST" action="{{ route('public.documents.submit') }}" class="request-form">
                         @csrf
+
+                        <!-- Hidden Document Type Field Populated by the Selected Tab -->
+                        <input type="hidden" name="document_type" id="selected_document_type" value="{{ old('document_type', 'Barangay Clearance') }}" required>
 
                         <div class="form-grid three-col">
                             <label>
@@ -82,30 +100,19 @@
 
                         <div class="form-grid two-col">
                             <label>
-                                <span>Document Type</span>
-                                <select name="document_type" required>
-                                    <option value="">Select document</option>
-                                    <option value="Barangay Clearance" {{ old('document_type') === 'Barangay Clearance' ? 'selected' : '' }}>Barangay Clearance</option>
-                                    <option value="Certificate of Residency" {{ old('document_type') === 'Certificate of Residency' ? 'selected' : '' }}>Certificate of Residency</option>
-                                    <option value="Certificate of Indigency" {{ old('document_type') === 'Certificate of Indigency' ? 'selected' : '' }}>Certificate of Indigency</option>
-                                    <option value="Business Endorsement" {{ old('document_type') === 'Business Endorsement' ? 'selected' : '' }}>Business Endorsement</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>Years Stayed</span>
+                                <span>Years Stayed in Barangay</span>
                                 <input type="number" name="years_stayed" min="0" max="100" value="{{ old('years_stayed') }}" placeholder="5">
                             </label>
-                        </div>
-
-                        <div class="form-grid single-col">
                             <label>
-                                <span>Purpose</span>
-                                <input type="text" name="purpose" value="{{ old('purpose') }}" placeholder="e.g. School requirement / employment / loan">
+                                <span>Specific Purpose</span>
+                                <input type="text" name="purpose" value="{{ old('purpose') }}" placeholder="e.g. Job requirement / scholarship / banking" required>
                             </label>
                         </div>
 
-                        <div class="submit-row">
-                            <button type="submit" class="button primary">Submit Request</button>
+                        <div class="submit-row" style="margin-top: 18px;">
+                            <button type="submit" class="button primary" id="submit-doc-btn">
+                                Submit Barangay Clearance Request
+                            </button>
                         </div>
                     </form>
                 </article>
@@ -113,22 +120,77 @@
                 <aside class="card side-card">
                     <h3>Processing flow</h3>
                     <div class="process-list">
-                        <div class="process-step"><strong>1.</strong> Fill out the request form.</div>
-                        <div class="process-step"><strong>2.</strong> Submit and wait for staff review.</div>
-                        <div class="process-step"><strong>3.</strong> Verify resident data and purpose.</div>
-                        <div class="process-step"><strong>4.</strong> Approve and release the requested document.</div>
+                        <div class="process-step"><strong>1.</strong> Choose document type above.</div>
+                        <div class="process-step"><strong>2.</strong> Complete your resident information.</div>
+                        <div class="process-step"><strong>3.</strong> Submit for barangay admin review.</div>
+                        <div class="process-step"><strong>4.</strong> Collect your document upon release.</div>
                     </div>
 
-                    <div class="info-box">
+                    <div class="info-box" style="margin-top: 20px;">
                         <p class="eyebrow compact">Requirements</p>
                         <ul>
-                            <li>Valid resident information</li>
-                            <li>Clear purpose of request</li>
-                            <li>Supporting documents when needed</li>
+                            <li>Registered resident of Barangay Bagumbayan</li>
+                            <li>Clear and accurate purpose</li>
+                            <li>Personal pickup with valid ID required</li>
                         </ul>
                     </div>
                 </aside>
             </div>
         </section>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.doc-tab-btn');
+            const hiddenInput = document.getElementById('selected_document_type');
+            const dynamicTitle = document.getElementById('dynamic-doc-title');
+            const submitBtn = document.getElementById('submit-doc-btn');
+            const formSection = document.getElementById('request-slip-section');
+
+            function setActiveDocument(docType, shouldScroll = false) {
+                hiddenInput.value = docType;
+                dynamicTitle.textContent = 'Requesting: ' + docType;
+                submitBtn.textContent = 'Submit ' + docType + ' Request';
+
+                tabs.forEach(tab => {
+                    const isCurrent = tab.getAttribute('data-doctype') === docType;
+                    const badge = tab.querySelector('.badge-select');
+                    if (isCurrent) {
+                        tab.style.borderColor = '#16a34a';
+                        tab.style.boxShadow = '0 0 0 2px rgba(22, 163, 74, 0.25)';
+                        tab.style.backgroundColor = '#f0fdf4';
+                        if (badge) {
+                            badge.textContent = '✓ Currently Selected';
+                            badge.style.background = '#16a34a';
+                            badge.style.color = '#ffffff';
+                        }
+                    } else {
+                        tab.style.borderColor = '#e2e8f0';
+                        tab.style.boxShadow = 'none';
+                        tab.style.backgroundColor = '#ffffff';
+                        if (badge) {
+                            badge.textContent = 'Click to Select';
+                            badge.style.background = '#f1f5f9';
+                            badge.style.color = '#475569';
+                        }
+                    }
+                });
+
+                if (shouldScroll && formSection) {
+                    formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            // Bind click handlers to cards
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const selectedType = this.getAttribute('data-doctype');
+                    setActiveDocument(selectedType, true);
+                });
+            });
+
+            // Initialize selection (respects old input on validation errors)
+            setActiveDocument(hiddenInput.value || 'Barangay Clearance', false);
+        });
+    </script>
 @endsection

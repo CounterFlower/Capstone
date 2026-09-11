@@ -164,4 +164,51 @@ class ResidentController extends Controller
     return redirect()->route('admin.dashboard', ['tab' => 'requests'])
         ->with('status', 'Document request status updated successfully.');
 }
+public function printDocument($request_id)
+    {
+        if (! session('is_admin')) {
+            return redirect()->route('admin.login');
+        }
+
+        // 1. Fetch document request and resident information
+        $document = DB::table('document_request')
+            ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
+            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
+            ->where('document_request.Request_ID', $request_id)
+            ->select([
+                'document_request.*',
+                'resident.First_Name',
+                'resident.Middle_Name',
+                'resident.Last_Name',
+                'resident.Civil_Status',
+                'resident.Contact_Number',
+                'household.Zone_Purok',
+                DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
+            ])
+            ->first();
+
+        abort_if(! $document, 404, 'Document request record not found.');
+
+        // 2. Identify the active logged-in Staff / Admin
+        $currentUserId = session('admin_user_id') ?? 1;
+        $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
+        
+        $staffName = $currentUser->Full_Name ?? session('admin_username') ?? 'Francis Julius G. Castuera';
+        $staffRole = ucfirst($currentUser->Role ?? 'Staff-in-Charge');
+
+        // 3. Automatically retrieve Punong Barangay (username 'kap' or User_ID 3 from your seeder)
+        $captainUser = DB::table('system_user')
+            ->where('Username', 'kap')
+            ->orWhere('User_ID', 3)
+            ->first();
+
+        $captainName = $captainUser->Full_Name ?? 'Prince Marvin E. Azul';
+
+        return view('dashboards.document_print', [
+            'document'    => $document,
+            'staffName'   => $staffName,
+            'staffRole'   => $staffRole,
+            'captainName' => $captainName,
+        ]);
+    }
 }

@@ -64,3 +64,17 @@ Route::patch('/admin/incidents/{incident_id}/status', [AdminController::class, '
 Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
 Route::post('/admin/document-requests/status', [ResidentController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
+Route::get('/admin/documents/{request_id}/print', [\App\Http\Controllers\ResidentController::class, 'printDocument'])
+    ->name('admin.documents.print');
+
+Route::middleware(['admin.inactivity'])->group(function () {
+    Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/incidents/{incident_id}/review', [AdminController::class, 'reviewIncident'])->name('admin.incidents.review');
+    Route::patch('/admin/incidents/{incident_id}/status', [AdminController::class, 'updateIncidentStatus'])->name('admin.incidents.update-status');
+    Route::post('/admin/documents/update-status', [ResidentController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
+    Route::get('/admin/documents/{request_id}/print', [ResidentController::class, 'printDocument'])->name('admin.documents.print');
+});
+
+Route::get('/admin/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.submit');
+Route::match(['get', 'post'], '/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');

@@ -463,37 +463,29 @@ class ResidentRepository
                 'Handled_By' => $handledBy,
             ]);
     }
-    public function getEventRegistrations(?int $eventId = null): \Illuminate\Support\Collection
+   public function getEventRegistrations(?int $eventId = null)
     {
-        if (! Schema::hasTable('event_rsvp') || ! Schema::hasTable('resident')) {
-            return collect();
-        }
-
-        $query = DB::table('event_rsvp as er')
-            ->join('resident as r', 'r.Resident_ID', '=', 'er.Resident_ID')
-            ->join('event as e', 'e.Event_ID', '=', 'er.Event_ID')
-            ->leftJoin('household as h', 'h.Household_Index', '=', 'r.Household_Index')
+        $query = DB::table('event_rsvp')
+            ->join('resident', 'event_rsvp.Resident_ID', '=', 'resident.Resident_ID')
+            ->join('event', 'event_rsvp.Event_ID', '=', 'event.Event_ID')
+            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
             ->select([
-                'er.RSVP_ID',
-                'er.Date_Registered',
-                'er.Attendance_Status',
-                'e.Event_ID',
-                'e.Event_Name',
-                'e.Event_Date',
-                'r.Resident_ID',
-                'r.First_Name',
-                'r.Middle_Name',
-                'r.Last_Name',
-                'r.Contact_Number',
-                'h.Zone_Purok',
-                'h.House_Number',
-            ])
-            ->orderByDesc('er.Date_Registered');
+                'event_rsvp.*',
+                'resident.First_Name',
+                'resident.Middle_Name',
+                'resident.Last_Name',
+                'resident.Date_of_Birth',
+                'resident.Contact_Number',
+                'household.House_Number',
+                'household.Zone_Purok',
+                'event.Event_Name',
+                'event.Event_Date',
+            ]);
 
-        if (! empty($eventId)) {
-            $query->where('er.Event_ID', $eventId);
+        if ($eventId) {
+            $query->where('event_rsvp.Event_ID', $eventId);
         }
 
-        return $query->get();
+        return $query->orderByDesc('event_rsvp.Date_Registered')->get();
     }
 }

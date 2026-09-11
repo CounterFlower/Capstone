@@ -11,14 +11,32 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Admin User
+// 1. System Users (Admin, Staff, and Punong Barangay)
         DB::table('system_user')->insertOrIgnore([
-            'User_ID'       => 1,
-            'Username'      => 'admin',
-            'Password_Hash' => Hash::make('password'),
-            'Role'          => 'admin',
-            'Full_Name'     => 'System Administrator',
-            'Is_Active'     => 1,
+            [
+                'User_ID'       => 1,
+                'Username'      => 'admin',
+                'Password_Hash' => Hash::make('password'),
+                'Role'          => 'admin',
+                'Full_Name'     => 'System Administrator',
+                'Is_Active'     => 1,
+            ],
+            [
+                'User_ID'       => 2,
+                'Username'      => 'staff',
+                'Password_Hash' => Hash::make(12345678),
+                'Role'          => 'admin',
+                'Full_Name'     => 'Francis Julius G. Castuera',
+                'Is_Active'     => 1,
+            ],
+            [
+                'User_ID'       => 3,
+                'Username'      => 'kap',
+                'Password_Hash' => Hash::make('12345678'),
+                'Role'          => 'admin',
+                'Full_Name'     => 'Prince Marvin E. Azul',
+                'Is_Active'     => 1,
+            ],
         ]);
 
         // 2. Incident Categories
