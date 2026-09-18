@@ -7,6 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use RuntimeException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ResidentController extends Controller
 {
@@ -165,50 +166,94 @@ class ResidentController extends Controller
         ->with('status', 'Document request status updated successfully.');
 }
 public function printDocument($request_id)
-    {
-        if (! session('is_admin')) {
-            return redirect()->route('admin.login');
-        }
+{
+    if (! session('is_admin')) {
+        return redirect()->route('admin.login');
+    }
 
-        // 1. Fetch document request and resident information
-        $document = DB::table('document_request')
-            ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
-            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
-            ->where('document_request.Request_ID', $request_id)
-            ->select([
-                'document_request.*',
-                'resident.First_Name',
-                'resident.Middle_Name',
-                'resident.Last_Name',
-                'resident.Civil_Status',
-                'resident.Contact_Number',
-                'household.Zone_Purok',
-                DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
-            ])
-            ->first();
+    $document = DB::table('document_request')
+        ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
+        ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
+        ->where('document_request.Request_ID', $request_id)
+        ->select([
+            'document_request.*',
+            'resident.First_Name',
+            'resident.Middle_Name',
+            'resident.Last_Name',
+            'resident.Civil_Status',
+            'resident.Contact_Number',
+            'household.Zone_Purok',
+            DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
+        ])
+        ->first();
 
-        abort_if(! $document, 404, 'Document request record not found.');
+    abort_if(! $document, 404, 'Document request record not found.');
 
-        // 2. Identify the active logged-in Staff / Admin
-        $currentUserId = session('admin_user_id') ?? 1;
-        $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
+    // Automatically generate and persist a verification hash if missing
+    if (empty($document->QR_Hash)) {
+        $qrHash = hash('sha256', $document->Request_ID . '-' . $document->Resident_ID . '-' . Str::random(16));
         
-        $staffName = $currentUser->Full_Name ?? session('admin_username') ?? 'Francis Julius G. Castuera';
-        $staffRole = ucfirst($currentUser->Role ?? 'Staff-in-Charge');
+        DB::table('document_request')
+            ->where('Request_ID', $document->Request_ID)
+            ->update(['QR_Hash' => $qrHash]);
 
-        // 3. Automatically retrieve Punong Barangay (username 'kap' or User_ID 3 from your seeder)
-        $captainUser = DB::table('system_user')
-            ->where('Username', 'kap')
-            ->orWhere('User_ID', 3)
-            ->first();
+        $document->QR_Hash = $qrHash;
+    }
 
-        $captainName = $captainUser->Full_Name ?? 'Prince Marvin E. Azul';
+// Force the QR code to use the IP address defined in .env regardless of what host header the laptop browser used
+$baseUrl = rtrim(config('app.url'), '/');
+$verifyUrl = $baseUrl . '/verify/document/' . $document->QR_Hash;
 
-        return view('dashboards.document_print', [
-            'document'    => $document,
-            'staffName'   => $staffName,
-            'staffRole'   => $staffRole,
-            'captainName' => $captainName,
+    // Retrieve active logged-in staff and Punong Barangay
+    $currentUserId = session('admin_user_id') ?? 1;
+    $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
+    $staffName = $currentUser->Full_Name ?? 'Francis Julius G. Castuera';
+    $staffRole = ucfirst($currentUser->Role ?? 'Staff-in-Charge');
+
+    $captainUser = DB::table('system_user')
+        ->where('Username', 'kap')
+        ->orWhere('User_ID', 3)
+        ->first();
+    $captainName = $captainUser->Full_Name ?? 'Prince Marvin E. Azul';
+
+    return view('dashboards.document_print', [
+        'document'    => $document,
+        'staffName'   => $staffName,
+        'staffRole'   => $staffRole,
+        'captainName' => $captainName,
+        'verifyUrl'   => $verifyUrl,
+    ]);
+}
+public function verifyPublicDocument($hash)
+{
+    $document = DB::table('document_request')
+        ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
+        ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
+        ->where('document_request.QR_Hash', $hash)
+        ->select([
+            'document_request.*',
+            'resident.First_Name',
+            'resident.Middle_Name',
+            'resident.Last_Name',
+            'resident.Civil_Status',
+            'household.Zone_Purok',
+            DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
+        ])
+        ->first();
+
+    if (! $document) {
+        return view('public.document_verification', [
+            'isValid' => false,
+            'message' => 'Invalid or counterfeit document. This QR code is not registered in the Barangay Bagumbayan database.',
         ]);
     }
+
+    $captain = DB::table('system_user')->where('Username', 'kap')->orWhere('User_ID', 3)->first();
+
+    return view('public.document_verification', [
+        'isValid'     => true,
+        'document'    => $document,
+        'captainName' => $captain->Full_Name ?? 'Prince Marvin E. Azul',
+    ]);
+}
 }
