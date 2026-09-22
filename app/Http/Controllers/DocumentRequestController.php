@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DocumentRequest;
 use App\Services\ResidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,11 +40,9 @@ class DocumentRequestController extends Controller
             'status'     => ['required', 'string', 'in:Pending,Not Approved,Released'],
         ]);
 
-        DB::table('document_request')
-            ->where('Request_ID', $validated['request_id'])
-            ->update([
-                'Status' => $validated['status'],
-            ]);
+        DocumentRequest::query()
+            ->whereKey($validated['request_id'])
+            ->update(['Status' => $validated['status']]);
 
         return redirect()->route('admin.dashboard', ['tab' => 'requests'])
             ->with('status', 'Document request status updated successfully.');
