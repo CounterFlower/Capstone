@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ResidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DocumentRequestController extends Controller
 {
@@ -72,6 +73,18 @@ class DocumentRequestController extends Controller
 
         abort_if(! $document, 404, 'Document request record not found.');
 
+        if (empty($document->QR_Hash)) {
+            $qrHash = hash('sha256', $document->Request_ID . '-' . $document->Resident_ID . '-' . Str::random(16));
+
+            DB::table('document_request')
+                ->where('Request_ID', $document->Request_ID)
+                ->update(['QR_Hash' => $qrHash]);
+
+            $document->QR_Hash = $qrHash;
+        }
+
+        $verifyUrl = rtrim(config('app.url'), '/') . '/verify/document/' . $document->QR_Hash;
+
         $currentUserId = session('admin_user_id') ?? 1;
         $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
 
@@ -90,6 +103,7 @@ class DocumentRequestController extends Controller
             'staffName'   => $staffName,
             'staffRole'   => $staffRole,
             'captainName' => $captainName,
+            'verifyUrl'   => $verifyUrl,
         ]);
     }
 

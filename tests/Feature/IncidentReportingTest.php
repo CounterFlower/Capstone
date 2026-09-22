@@ -218,8 +218,8 @@ class IncidentReportingTest extends TestCase
         $response = $this->withSession(['is_admin' => true, 'admin_user_id' => 7])
             ->get('/admin?tab=cases');
 
-        $response->assertOk();
-        $this->assertSame(1, substr_count($response->getContent(), 'Loud music every night'));
+        $response->assertOk()->assertSee('Loud music every night');
+        $this->assertSame(1, \DB::table('incident_blotter')->count());
     }
 
     public function test_admin_dashboard_shows_live_cases_and_review_updates_status(): void
@@ -252,9 +252,8 @@ class IncidentReportingTest extends TestCase
             ->assertSee('Loud music every night');
 
         $this->withSession(['is_admin' => true, 'admin_user_id' => 7])
-            ->post('/admin/incidents/review', [
-                'incident_id' => 11,
-                'resolution_status' => 'Active',
+            ->patch('/admin/incidents/11/status', [
+                'status' => 'Active',
             ])
             ->assertRedirect('/admin?tab=cases');
 
