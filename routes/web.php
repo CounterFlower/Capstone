@@ -1,14 +1,12 @@
 <?php
 
 use App\Http\Controllers\AdminAuthController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\IncidentBlotterController;
 use App\Http\Controllers\PublicPageController;
-use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ResidentProfileController;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -67,19 +65,9 @@ Route::patch('/admin/incidents/{incident_id}/status', [IncidentBlotterController
 
 Route::get('/admin', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
 
-Route::post('/admin/document-requests/status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
+Route::post('/admin/document-requests/status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status-legacy');
+Route::post('/admin/documents/update-status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
 Route::get('/admin/documents/{request_id}/print', [DocumentRequestController::class, 'printDocument'])
     ->name('admin.documents.print');
 
-Route::middleware(['admin.inactivity'])->group(function () {
-    Route::get('/admin', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/admin/incidents/{incident_id}/review', [IncidentBlotterController::class, 'reviewIncident'])->name('admin.incidents.review');
-    Route::patch('/admin/incidents/{incident_id}/status', [IncidentBlotterController::class, 'updateIncidentStatus'])->name('admin.incidents.update-status');
-    Route::post('/admin/documents/update-status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
-    Route::get('/admin/documents/{request_id}/print', [DocumentRequestController::class, 'printDocument'])->name('admin.documents.print');
-});
-
-Route::get('/admin/login', [AdminAuthController::class, 'loginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
-Route::match(['get', 'post'], '/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-Route::get('/verify/document/{hash}', [ResidentController::class, 'verifyPublicDocument'])->name('document.verify');
+Route::get('/verify/document/{hash}', [DocumentRequestController::class, 'verifyPublicDocument'])->name('document.verify');

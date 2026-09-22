@@ -92,4 +92,40 @@ class DocumentRequestController extends Controller
             'captainName' => $captainName,
         ]);
     }
+
+    public function verifyPublicDocument($hash)
+    {
+        $document = DB::table('document_request')
+            ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
+            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
+            ->where('document_request.QR_Hash', $hash)
+            ->select([
+                'document_request.*',
+                'resident.First_Name',
+                'resident.Middle_Name',
+                'resident.Last_Name',
+                'resident.Civil_Status',
+                'household.Zone_Purok',
+                DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
+            ])
+            ->first();
+
+        if (! $document) {
+            return view('public.document_verification', [
+                'isValid' => false,
+                'message' => 'Invalid or counterfeit document. This QR code is not registered in the Barangay Bagumbayan database.',
+            ]);
+        }
+
+        $captain = DB::table('system_user')
+            ->where('Username', 'kap')
+            ->orWhere('User_ID', 3)
+            ->first();
+
+        return view('public.document_verification', [
+            'isValid' => true,
+            'document' => $document,
+            'captainName' => $captain->Full_Name ?? 'Prince Marvin E. Azul',
+        ]);
+    }
 }
