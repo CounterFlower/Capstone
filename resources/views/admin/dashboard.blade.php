@@ -336,6 +336,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <a href="{{ route('admin.incidents.review', $case->Incident_ID) }}" class="button primary" style="display: inline-block; padding: 6px 14px; text-decoration: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
                                         Review
                                     </a>
+                                    <a href="{{ route('admin.incidents.print', $case->Incident_ID) }}" target="_blank" rel="noopener" class="button secondary" style="display: inline-block; padding: 6px 14px; text-decoration: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-left: 4px;">
+                                        Print
+                                    </a>
                                 </td>
                             </tr>
                         @empty

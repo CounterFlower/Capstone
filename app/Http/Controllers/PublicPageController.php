@@ -96,11 +96,11 @@ public function home()
             'complaint_details' => ['required', 'string'],
             'requested_relief' => ['nullable', 'string'],
             // Validate coordinates
-            'Latitude' => ['required', 'numeric', 'between:-90,90'],
-            'Longitude' => ['required', 'numeric', 'between:-180,180'],
+            'Latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'Longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ], [
-            'Latitude.required' => 'Please select the incident location on the map.',
-            'Longitude.required' => 'Please select the incident location on the map.',
+            'Latitude.numeric' => 'The incident latitude must be a valid coordinate.',
+            'Longitude.numeric' => 'The incident longitude must be a valid coordinate.',
         ]);
 
         $respondentName = trim(implode(' ', array_filter([

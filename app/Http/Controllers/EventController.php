@@ -52,6 +52,11 @@ class EventController extends Controller
             $file->move($destination, $imageFilename);
         }
 
+        $adminUserId = session('admin_user_id');
+        $createdBy = $adminUserId && DB::table('system_user')->where('User_ID', $adminUserId)->exists()
+            ? $adminUserId
+            : null;
+
         $payload = [
             'Event_Name'      => $validated['event_name'],
             'Event_Date'      => $validated['event_date'],
@@ -59,7 +64,7 @@ class EventController extends Controller
             'Location'        => $validated['location'],
             'Available_Slots' => $validated['available_slots'],
             'Cover_Image'     => $imageFilename,
-            'Created_By'      => session('admin_user_id') ?? 1,
+            'Created_By'      => $createdBy,
         ];
 
         // Safely map Description or Summary based on actual database column

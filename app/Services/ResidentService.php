@@ -20,9 +20,9 @@ class ResidentService
         $events = $this->prototypeEventService->events();
         $registrations = $this->prototypeEventService->readRegistrations();
 
-        // -------------------------------------------------------------
-        // 1. Document Requests Calculations
-        // -------------------------------------------------------------
+
+// 1. Document Requests Calculations
+
         $totalDocRequests = DB::table('document_request')->count();
         $releasedDocRequests = DB::table('document_request')
             ->whereRaw('LOWER(TRIM(Status)) = ?', ['released'])
@@ -60,15 +60,14 @@ class ResidentService
             $docChartRates[] = $rate;
         }
 
-        // Fallback default coordinates if no timeline records exist
         if (empty($docChartLabels)) {
             $docChartLabels = [now()->subDays(2)->format('M d'), now()->subDay()->format('M d'), now()->format('M d')];
             $docChartRates = [$docRate, $docRate, $docRate];
         }
 
-        // -------------------------------------------------------------
-        // 2. Incident Cases Calculations
-        // -------------------------------------------------------------
+
+// 2. Incident Cases Calculations
+
         $caseTable = Schema::hasTable('incident_blotter') ? 'incident_blotter' : 'cases';
         $totalCases = DB::table($caseTable)->count();
         $resolvedCases = DB::table($caseTable)
@@ -79,7 +78,7 @@ class ResidentService
             ->count();
         $caseRate = $totalCases > 0 ? round(($resolvedCases / $totalCases) * 100, 1) : 0;
 
-        // Determine the best date column for incident_blotter
+
         $caseDateCol = 'Date_Reported';
         if (! Schema::hasColumn($caseTable, 'Date_Reported')) {
             $caseDateCol = Schema::hasColumn($caseTable, 'Date_Filed') ? 'Date_Filed' : 'created_at';
