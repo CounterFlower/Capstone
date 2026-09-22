@@ -6,6 +6,20 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEventRegistrationRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('resident_name') && ! $this->filled('first_name')) {
+            $nameParts = preg_split('/\s+/', trim((string) $this->input('resident_name')), -1, PREG_SPLIT_NO_EMPTY);
+
+            if (count($nameParts) >= 2) {
+                $this->merge([
+                    'first_name' => $nameParts[0],
+                    'last_name' => $nameParts[count($nameParts) - 1],
+                ]);
+            }
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

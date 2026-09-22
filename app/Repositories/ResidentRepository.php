@@ -164,13 +164,17 @@ class ResidentRepository
 
                     // Digit match: allows "6" to match "Purok 6", "Zone 6", or "6"
                     if (! empty($purokNumber)) {
-                        $h->orWhereRaw("REGEXP_REPLACE(Zone_Purok, '[^0-9]', '') = ?", [$purokNumber])
-                          ->orWhereRaw("LOWER(Zone_Purok) LIKE ?", ["%{$purokNumber}%"]);
+                                                $h->orWhereRaw('LOWER(Zone_Purok) LIKE ?', ["%{$purokNumber}%"]);
+
+                                                if (DB::connection()->getDriverName() !== 'sqlite') {
+                                                        $h->orWhereRaw("REGEXP_REPLACE(Zone_Purok, '[^0-9]', '') = ?", [$purokNumber]);
+                                                }
                     }
                 });
             }
 
-            $indexes = $householdQuery->pluck('Household_Index')->all();
+            $indexes = $householdQuery->pluck('Household_Index');
+            $indexes = is_array($indexes) ? $indexes : $indexes->all();
 
             if (! empty($indexes)) {
                 $query->whereIn('Household_Index', $indexes);

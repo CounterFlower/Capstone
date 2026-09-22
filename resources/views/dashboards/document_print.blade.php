@@ -208,7 +208,19 @@
             <span class="signature-title">Punong Barangay</span>
         </div>
     </div>
-
+<footer style="margin-top: 60px; text-align: center; font-size: 10pt; color: #6b7280;">
+    <!-- QR Verification Block -->
+<div style="display: flex; align-items: center; gap: 15px; margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+    <div>
+        {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(85)->generate($verifyUrl) !!}
+    </div>
+    <div style="font-size: 8.5pt; color: #475569; line-height: 1.4;">
+        <strong style="color: #0f172a; display: block; font-size: 9.5pt;">Official Document Verification</strong>
+        Scan this QR code using a smartphone camera to authenticate this document against Barangay Bagumbayan's official digital registry.<br>
+        <span style="font-family: monospace; font-size: 7.5pt; color: #64748b;">Ref Hash: {{ substr($document->QR_Hash, 0, 24) }}...</span>
+    </div>
+</div>
+</footer>
     <script>
         // Trigger print dialog on load
         window.addEventListener('load', function () {

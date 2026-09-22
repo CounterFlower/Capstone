@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Services\ResidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+<<<<<<< HEAD
+=======
+use Illuminate\Support\Str;
+>>>>>>> origin/main
 
 class DocumentRequestController extends Controller
 {
@@ -72,6 +76,21 @@ class DocumentRequestController extends Controller
 
         abort_if(! $document, 404, 'Document request record not found.');
 
+<<<<<<< HEAD
+=======
+        if (empty($document->QR_Hash)) {
+            $qrHash = hash('sha256', $document->Request_ID . '-' . $document->Resident_ID . '-' . Str::random(16));
+
+            DB::table('document_request')
+                ->where('Request_ID', $document->Request_ID)
+                ->update(['QR_Hash' => $qrHash]);
+
+            $document->QR_Hash = $qrHash;
+        }
+
+        $verifyUrl = rtrim(config('app.url'), '/') . '/verify/document/' . $document->QR_Hash;
+
+>>>>>>> origin/main
         $currentUserId = session('admin_user_id') ?? 1;
         $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
 
@@ -90,6 +109,46 @@ class DocumentRequestController extends Controller
             'staffName'   => $staffName,
             'staffRole'   => $staffRole,
             'captainName' => $captainName,
+<<<<<<< HEAD
+=======
+            'verifyUrl'   => $verifyUrl,
+        ]);
+    }
+
+    public function verifyPublicDocument($hash)
+    {
+        $document = DB::table('document_request')
+            ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
+            ->leftJoin('household', 'resident.Household_Index', '=', 'household.Household_Index')
+            ->where('document_request.QR_Hash', $hash)
+            ->select([
+                'document_request.*',
+                'resident.First_Name',
+                'resident.Middle_Name',
+                'resident.Last_Name',
+                'resident.Civil_Status',
+                'household.Zone_Purok',
+                DB::raw("TRIM(CONCAT(COALESCE(resident.First_Name, ''), ' ', COALESCE(resident.Middle_Name, ''), ' ', COALESCE(resident.Last_Name, ''))) as resident_name"),
+            ])
+            ->first();
+
+        if (! $document) {
+            return view('public.document_verification', [
+                'isValid' => false,
+                'message' => 'Invalid or counterfeit document. This QR code is not registered in the Barangay Bagumbayan database.',
+            ]);
+        }
+
+        $captain = DB::table('system_user')
+            ->where('Username', 'kap')
+            ->orWhere('User_ID', 3)
+            ->first();
+
+        return view('public.document_verification', [
+            'isValid' => true,
+            'document' => $document,
+            'captainName' => $captain->Full_Name ?? 'Prince Marvin E. Azul',
+>>>>>>> origin/main
         ]);
     }
 }
