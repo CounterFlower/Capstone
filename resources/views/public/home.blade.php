@@ -6,6 +6,112 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
+        .intro-panel {
+            margin: 28px 0 34px;
+            padding: clamp(24px, 5vw, 48px);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at 50% 0, rgba(43, 108, 176, 0.1), transparent 36%),
+                linear-gradient(145deg, #FFFFFF 0%, #F7FAFC 100%);
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .intro-logo {
+            display: block;
+            width: clamp(112px, 18vw, 168px);
+            height: clamp(112px, 18vw, 168px);
+            object-fit: contain;
+            margin: 0 auto 18px;
+            filter: drop-shadow(0 10px 16px rgba(26, 54, 93, 0.14));
+        }
+
+        .intro-heading {
+            margin-bottom: 12px;
+            font-size: clamp(2rem, 5vw, 3rem);
+        }
+
+        .intro-description {
+            max-width: 72ch;
+            margin: 0 auto;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        .intro-population {
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 12px;
+            margin-top: 22px;
+            padding: 12px 18px;
+            border: 1px solid rgba(43, 108, 176, 0.18);
+            border-radius: 999px;
+            background: rgba(43, 108, 176, 0.07);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .intro-population span {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .intro-demographics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .intro-stat {
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        .intro-stat h3 {
+            margin-bottom: 8px;
+            color: var(--secondary);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .intro-stat strong {
+            display: block;
+            color: var(--primary);
+            font-size: clamp(1.35rem, 3vw, 1.8rem);
+        }
+
+        .intro-stat p {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .intro-age-note {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 500ms ease, transform 500ms ease;
+        }
+
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .community-map-card {
             background: var(--surface);
             border: 1px solid var(--line);
@@ -123,7 +229,73 @@
                 padding: 8px 10px;
             }
         }
+
+        @media (max-width: 760px) {
+            .intro-panel {
+                border-radius: 22px;
+            }
+
+            .intro-demographics {
+                grid-template-columns: 1fr;
+            }
+
+            .intro-population {
+                border-radius: 18px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+        }
     </style>
+
+    <section class="intro-panel">
+        <img
+            src="{{ asset('images/bagumbayan_logo.png') }}"
+            alt="Barangay Bagumbayan logo"
+            class="intro-logo"
+            width="168"
+            height="168"
+        >
+        <p class="eyebrow">Welcome to</p>
+        <h1 class="intro-heading">Barangay Bagumbayan</h1>
+        <p class="intro-description">
+            Bagumbayan is a barangay in the municipality of Daraga, in the province of Albay.
+            The 2020 Census recorded 4,007 residents, representing 2.99% of Daraga's total population.
+        </p>
+        <div class="intro-population">
+            4,007 residents
+            <span>2020 Census</span>
+        </div>
+
+        <div class="intro-demographics" aria-label="Bagumbayan population and age profile">
+            <article class="intro-stat">
+                <h3>Young dependents</h3>
+                <strong>941 <small>(27.55%)</small></strong>
+                <p>Aged 14 and below</p>
+            </article>
+            <article class="intro-stat">
+                <h3>Working-age population</h3>
+                <strong>2,295 <small>(67.18%)</small></strong>
+                <p>Aged 15 to 64</p>
+            </article>
+            <article class="intro-stat">
+                <h3>Senior citizens</h3>
+                <strong>180 <small>(5.27%)</small></strong>
+                <p>Aged 65 and over</p>
+            </article>
+        </div>
+
+        <p class="intro-age-note">
+            Based on the 2015 age profile, the largest age group was 20–24 (345 people) and the smallest was
+            80 and over (20 people). The median age was 26. The age dependency ratio was 49 dependents per
+            100 working-age residents: 41 youth and 8 seniors.
+        </p>
+    </section>
 
    <section class="hero">
         <section>
@@ -305,6 +477,32 @@
             </article>
         </div>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const targets = document.querySelectorAll(
+                '.intro-panel, .hero, .section, .community-map-card, .photo-card, .service-card, .notice-card, .card'
+            );
+
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+                return;
+            }
+
+            const observer = new IntersectionObserver(function (entries, currentObserver) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        currentObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+
+            targets.forEach(function (target) {
+                target.classList.add('reveal');
+                observer.observe(target);
+            });
+        });
+    </script>
 
     <!-- Map Script -->
     <script>

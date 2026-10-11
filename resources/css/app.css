@@ -11,16 +11,17 @@
 }
 
 :root {
-    --bg: #f5efdc;
-    --surface: rgba(255, 250, 239, 0.86);
-    --surface-strong: #fff8e7;
-    --text: #183527;
-    --muted: #53685e;
-    --primary: #2f7a53;
-    --primary-deep: #1f583a;
-    --accent: #d0a03c;
-    --line: rgba(24, 53, 39, 0.1);
-    --shadow: 0 18px 45px rgba(31, 57, 43, 0.12);
+    --bg: #F7FAFC;
+    --surface: #FFFFFF;
+    --surface-strong: #F7FAFC;
+    --text: #2D3748;
+    --muted: #718096;
+    --primary: #1A365D;
+    --primary-deep: #0F2440;
+    --secondary: #2B6CB0;
+    --accent: #D69E2E;
+    --line: rgba(45, 55, 72, 0.12);
+    --shadow: 0 18px 45px rgba(26, 54, 93, 0.08);
 }
 
 html {
@@ -31,9 +32,9 @@ body {
     min-height: 100vh;
     color: var(--text);
     background:
-        radial-gradient(circle at top left, rgba(208, 160, 60, 0.2), transparent 26%),
-        radial-gradient(circle at top right, rgba(47, 122, 83, 0.18), transparent 24%),
-        linear-gradient(160deg, #f8f1dd 0%, #eef5ea 100%);
+        radial-gradient(circle at top left, rgba(214, 158, 46, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(43, 108, 176, 0.10), transparent 26%),
+        linear-gradient(160deg, #FFFFFF 0%, #F7FAFC 100%);
 }
 
 .page {
@@ -60,7 +61,7 @@ body {
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--primary-deep);
+    color: var(--secondary);
 }
 
 h1,
@@ -76,6 +77,7 @@ h2,
 h3,
 h4 {
     font-family: Georgia, "Times New Roman", serif;
+    color: var(--primary);
 }
 
 h1 {
@@ -109,7 +111,7 @@ h1 {
     padding: 32px;
     border: 1px solid var(--line);
     border-radius: 28px;
-    background: linear-gradient(145deg, rgba(255, 248, 231, 0.96), rgba(236, 245, 234, 0.88));
+    background: linear-gradient(145deg, #FFFFFF 0%, #F7FAFC 100%);
     box-shadow: var(--shadow);
 }
 
@@ -139,18 +141,29 @@ h1 {
     padding: 14px 20px;
     border-radius: 999px;
     font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .button-primary {
-    color: #fffdf5;
-    background: linear-gradient(120deg, var(--primary), var(--primary-deep));
-    box-shadow: 0 10px 24px rgba(47, 122, 83, 0.24);
+    color: #FFFFFF;
+    background: var(--accent);
+    box-shadow: 0 10px 24px rgba(214, 158, 46, 0.28);
+}
+
+.button-primary:hover {
+    background: #B7791F;
 }
 
 .button-secondary {
-    border: 1px solid rgba(31, 88, 58, 0.15);
-    background: rgba(255, 255, 255, 0.58);
-    color: var(--primary-deep);
+    border: 1px solid rgba(43, 108, 176, 0.3);
+    background: #FFFFFF;
+    color: var(--secondary);
+}
+
+.button-secondary:hover {
+    background: #EDF2F7;
+    border-color: var(--secondary);
 }
 
 .panel,
@@ -178,7 +191,7 @@ h1 {
     padding: 18px;
     border-radius: 18px;
     background: var(--surface-strong);
-    border: 1px solid rgba(24, 53, 39, 0.08);
+    border: 1px solid var(--line);
 }
 
 .stat span {
@@ -189,7 +202,7 @@ h1 {
     display: block;
     margin-top: 8px;
     font-size: 1.75rem;
-    color: var(--primary-deep);
+    color: var(--primary);
 }
 
 .grid {
@@ -207,6 +220,7 @@ h1 {
 
 .section-heading h3 {
     font-size: 1.5rem;
+    color: var(--secondary);
 }
 
 .updates {
@@ -226,8 +240,8 @@ h1 {
     align-items: flex-start;
     padding: 14px 16px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.56);
-    border: 1px solid rgba(24, 53, 39, 0.08);
+    background: #FFFFFF;
+    border: 1px solid var(--line);
     color: var(--muted);
 }
 
@@ -248,8 +262,8 @@ h1 {
 .contact-box {
     padding: 20px;
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(47, 122, 83, 0.96), rgba(31, 88, 58, 0.93));
-    color: #fff8ea;
+    background: linear-gradient(135deg, #1A365D 0%, #0F2440 100%);
+    color: #F7FAFC;
 }
 
 .contact-box p + p {
