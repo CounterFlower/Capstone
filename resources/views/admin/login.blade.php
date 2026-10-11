@@ -6,14 +6,17 @@
     <title>Admin Login</title>
     <style>
         :root {
-            --text: #173024;
-            --muted: #6b7c74;
-            --line: rgba(23, 48, 36, 0.1);
-            --surface: rgba(255, 255, 255, 0.9);
-            --hero: #173729;
-            --hero-soft: #2d5b46;
-            --shadow: 0 20px 48px rgba(23, 48, 36, 0.16);
-            --danger: #b55343;
+            --text: #2D3748;
+            --muted: #718096;
+            --line: rgba(45, 55, 72, 0.12);
+            --surface: #FFFFFF;
+            --hero: #1A365D;
+            --hero-soft: #2B6CB0;
+            --accent: #D69E2E;
+            --accent-hover: #B7791F;
+            --secondary: #2B6CB0;
+            --shadow: 0 20px 48px rgba(26, 54, 93, 0.14);
+            --danger: #C53030;
         }
 
         * {
@@ -29,12 +32,17 @@
             font-family: "Trebuchet MS", "Segoe UI", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(213, 159, 57, 0.16), transparent 24%),
-                linear-gradient(160deg, #f5efdd 0%, #edf3ef 100%);
+                radial-gradient(circle at top left, rgba(214, 158, 46, 0.12), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(43, 108, 176, 0.12), transparent 28%),
+                linear-gradient(160deg, #FFFFFF 0%, #F7FAFC 100%);
         }
 
         h1, h2, p {
             margin: 0;
+        }
+
+        h1, h2 {
+            font-family: Georgia, "Times New Roman", serif;
         }
 
         .login-shell {
@@ -50,18 +58,27 @@
 
         .intro {
             padding: 38px;
-            color: #f6f2e7;
-            background: linear-gradient(145deg, var(--hero) 0%, var(--hero-soft) 100%);
+            color: #F7FAFC;
+            background: linear-gradient(145deg, var(--hero) 0%, #0F2440 100%);
+        }
+
+        .intro h1 {
+            color: #FFFFFF;
         }
 
         .intro p {
             margin-top: 14px;
             line-height: 1.8;
-            color: rgba(246, 242, 231, 0.82);
+            color: rgba(247, 250, 252, 0.82);
         }
 
         .panel {
             padding: 38px;
+            background: #FFFFFF;
+        }
+
+        .panel h2 {
+            color: var(--hero);
         }
 
         .eyebrow {
@@ -69,7 +86,8 @@
             font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            color: #d59f39;
+            color: var(--accent);
+            font-weight: 700;
         }
 
         .subtext,
@@ -87,15 +105,24 @@
             display: grid;
             gap: 8px;
             font-weight: 700;
+            color: var(--text);
         }
 
         input {
             width: 100%;
             padding: 14px 16px;
             border-radius: 14px;
-            border: 1px solid rgba(23, 48, 36, 0.12);
-            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--line);
+            background: #FFFFFF;
             font: inherit;
+            color: var(--text);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input:focus {
+            outline: 0;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.14);
         }
 
         button,
@@ -109,25 +136,38 @@
             font: inherit;
             font-weight: 700;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         button {
-            color: #fffdf5;
-            background: linear-gradient(120deg, var(--hero-soft), var(--hero));
+            color: #FFFFFF;
+            background: var(--accent);
+            box-shadow: 0 4px 14px rgba(214, 158, 46, 0.28);
+        }
+
+        button:hover {
+            background: var(--accent-hover);
         }
 
         .back-link {
             margin-top: 12px;
-            background: rgba(23, 48, 36, 0.06);
-            color: var(--text);
+            background: #F7FAFC;
+            border: 1px solid var(--line);
+            color: var(--secondary);
             text-decoration: none;
+        }
+
+        .back-link:hover {
+            background: #EDF2F7;
+            color: var(--hero);
         }
 
         .error-box {
             padding: 12px 14px;
             border-radius: 14px;
-            background: rgba(181, 83, 67, 0.12);
+            background: rgba(197, 48, 48, 0.1);
             color: var(--danger);
+            border-left: 4px solid var(--danger);
         }
 
         @media (max-width: 920px) {

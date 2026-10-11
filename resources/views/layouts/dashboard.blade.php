@@ -4,20 +4,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Barangay Dashboard' }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
-            --bg: #edf3ec;
-            --surface: rgba(255, 255, 255, 0.84);
-            --surface-strong: #ffffff;
-            --sidebar: #16372a;
-            --sidebar-soft: #224b3b;
-            --text: #173226;
-            --muted: #64766f;
-            --line: rgba(23, 50, 38, 0.1);
-            --accent: #d59a34;
-            --success: #2d7c54;
-            --danger: #b45142;
-            --shadow: 0 18px 42px rgba(23, 50, 38, 0.12);
+            --bg: #F7FAFC;
+            --surface: #FFFFFF;
+            --surface-strong: #F7FAFC;
+            --sidebar: #1A365D;
+            --sidebar-soft: #0F2440;
+            --primary: #1A365D;
+            --secondary: #2B6CB0;
+            --secondary-hover: #2C5282;
+            --text: #2D3748;
+            --muted: #718096;
+            --line: rgba(45, 55, 72, 0.12);
+            --accent: #D69E2E;
+            --accent-hover: #B7791F;
+            --success: #2B6CB0;
+            --danger: #C53030;
+            --shadow: 0 18px 42px rgba(26, 54, 93, 0.08);
         }
 
         * {
@@ -30,8 +35,9 @@
             font-family: "Trebuchet MS", "Segoe UI", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(213, 154, 52, 0.15), transparent 24%),
-                linear-gradient(160deg, #f4f0dd 0%, #e9f2ea 100%);
+                radial-gradient(circle at top left, rgba(214, 158, 46, 0.10), transparent 24%),
+                radial-gradient(circle at top right, rgba(43, 108, 176, 0.10), transparent 22%),
+                linear-gradient(160deg, #FFFFFF 0%, #F7FAFC 100%);
         }
 
         a {
@@ -45,6 +51,7 @@
 
         h1, h2, h3, h4 {
             font-family: Georgia, "Times New Roman", serif;
+            color: var(--primary);
         }
 
         .app-shell {
@@ -56,17 +63,39 @@
         .sidebar {
             padding: 28px 22px;
             background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-soft) 100%);
-            color: #f7f6ef;
+            color: #F7FAFC;
         }
 
         .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             padding-bottom: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
+        .brand-mark {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px;
+            box-shadow: 0 6px 18px rgba(15, 36, 64, 0.18);
+        }
+
+        .brand-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .brand h2 {
+            color: #FFFFFF;
+        }
+
         .brand p {
-            margin-top: 6px;
-            color: rgba(247, 246, 239, 0.72);
+            margin-top: 0;
+            color: rgba(247, 250, 252, 0.78);
             line-height: 1.6;
         }
 
@@ -79,23 +108,25 @@
         .nav-link {
             padding: 14px 16px;
             border-radius: 16px;
-            color: rgba(247, 246, 239, 0.82);
-            background: rgba(255, 255, 255, 0.04);
+            color: rgba(247, 250, 252, 0.86);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.08);
             display: block;
+            transition: all 0.2s ease;
         }
 
         .nav-link.active {
-            color: #13261d;
-            background: #f7f0de;
-            border-color: rgba(213, 154, 52, 0.3);
+            color: #FFFFFF;
+            background: var(--secondary);
+            border-color: var(--secondary);
+            box-shadow: 0 4px 14px rgba(43, 108, 176, 0.35);
         }
 
         .nav-link small {
             display: block;
             margin-top: 5px;
             color: inherit;
-            opacity: 0.74;
+            opacity: 0.76;
         }
 
         .content {
@@ -110,12 +141,17 @@
             margin-bottom: 24px;
         }
 
+        .topbar h1 {
+            color: var(--primary);
+        }
+
         .eyebrow {
             margin-bottom: 8px;
             font-size: 0.78rem;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: var(--success);
+            color: var(--secondary);
+            font-weight: 700;
         }
 
         .topbar p {
@@ -128,8 +164,8 @@
         .status-pill {
             padding: 10px 14px;
             border-radius: 999px;
-            background: rgba(45, 124, 84, 0.12);
-            color: var(--success);
+            background: rgba(43, 108, 176, 0.12);
+            color: var(--secondary);
             font-weight: 700;
             white-space: nowrap;
         }
@@ -161,6 +197,7 @@
             border: 1px solid var(--line);
             border-radius: 24px;
             box-shadow: var(--shadow);
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
         }
 
         .stat-card {
@@ -177,7 +214,7 @@
             display: block;
             margin-top: 10px;
             font-size: 2rem;
-            color: var(--text);
+            color: var(--primary);
         }
 
         .card {
@@ -187,12 +224,12 @@
         .card h3 {
             margin-bottom: 16px;
             font-size: 1.4rem;
+            color: var(--primary);
         }
 
         .card p,
         .card li,
-        .table td,
-        .table th {
+        .table td {
             color: var(--muted);
         }
 
@@ -207,7 +244,71 @@
             padding: 14px 16px;
             border-radius: 16px;
             background: var(--surface-strong);
-            border: 1px solid rgba(23, 50, 38, 0.08);
+            border: 1px solid var(--line);
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+        }
+
+        .content button:not(:disabled),
+        .content a.button {
+            transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, filter 180ms ease, transform 180ms ease;
+        }
+
+        .content button:focus-visible,
+        .content a.button:focus-visible {
+            outline: 3px solid rgba(214, 158, 46, 0.7);
+            outline-offset: 3px;
+        }
+
+        .content button:active,
+        .content a.button:active {
+            transform: translateY(0);
+            filter: brightness(0.9);
+        }
+
+        @media (hover: hover) {
+            .nav-link:hover {
+                background: rgba(255, 255, 255, 0.12);
+                color: #FFFFFF;
+            }
+        }
+
+        @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+            .card:hover,
+            .stat-card:hover,
+            .list-item:hover,
+            .queue-item:hover,
+            .notice-item:hover {
+                transform: translateY(-3px);
+                border-color: rgba(43, 108, 176, 0.28);
+                box-shadow: 0 14px 30px rgba(26, 54, 93, 0.12);
+            }
+        }
+
+        @media (hover: hover) {
+            .content button:not(:disabled):hover,
+            .content a.button:hover {
+                filter: brightness(0.92) saturate(1.12);
+                box-shadow: 0 6px 16px rgba(26, 54, 93, 0.18);
+            }
+        }
+
+        @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+            .content button:not(:disabled):hover,
+            .content a.button:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .card,
+            .stat-card,
+            .list-item,
+            .queue-item,
+            .notice-item,
+            .content button,
+            .content a.button {
+                transition: none;
+            }
         }
 
         .list-item strong,
@@ -215,7 +316,7 @@
         .notice-item strong {
             display: block;
             margin-bottom: 6px;
-            color: var(--text);
+            color: var(--primary);
         }
 
         .table {
@@ -227,7 +328,12 @@
         .table td {
             padding: 12px 10px;
             text-align: left;
-            border-bottom: 1px solid rgba(23, 50, 38, 0.08);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .table th {
+            color: var(--primary);
+            font-weight: 700;
         }
 
         .badge {
@@ -240,17 +346,17 @@
         }
 
         .badge.warn {
-            background: rgba(213, 154, 52, 0.16);
-            color: #8f6316;
+            background: rgba(214, 158, 46, 0.15);
+            color: #B7791F;
         }
 
         .badge.good {
-            background: rgba(45, 124, 84, 0.13);
-            color: var(--success);
+            background: rgba(43, 108, 176, 0.12);
+            color: var(--secondary);
         }
 
         .badge.alert {
-            background: rgba(180, 81, 66, 0.14);
+            background: rgba(197, 48, 48, 0.12);
             color: var(--danger);
         }
 
@@ -266,11 +372,43 @@
         @media (max-width: 720px) {
             .content,
             .sidebar {
-                padding: 20px;
+                padding: 16px;
             }
 
             .topbar {
                 flex-direction: column;
+            }
+
+            .sidebar nav {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .sidebar nav form {
+                grid-column: 1 / -1;
+            }
+
+            .nav-link {
+                height: 100%;
+                padding: 12px;
+                font-size: 0.92rem;
+            }
+
+            .table {
+                display: block;
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table th,
+            .table td {
+                white-space: nowrap;
+            }
+
+            .content button:not(:disabled),
+            .content a.button {
+                min-height: 44px;
             }
         }
     </style>
@@ -279,8 +417,11 @@
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
-                <h2>Bagumbayan</h2>
-                <p>Barangay operations prototype focused on records, services, analytics, and case monitoring.</p>
+                <img src="{{ asset('images/bagumbayan_logo.png') }}" alt="Barangay Bagumbayan Logo" class="brand-mark">
+                <div class="brand-copy">
+                    <h2>Bagumbayan</h2>
+                    <p>Barangay operations prototype focused on records, services, analytics, and case monitoring.</p>
+                </div>
             </div>
 
             @php

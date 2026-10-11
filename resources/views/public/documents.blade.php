@@ -17,7 +17,7 @@
                      style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Barangay Clearance</h3>
                 <p>General-purpose certification for local records, employment, and legal transactions.</p>
-                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #1A365D; background: rgba(43, 108, 176, 0.12); padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
 
             <article class="service-card doc-tab-btn" 
@@ -25,7 +25,7 @@
                      style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Certificate of Residency</h3>
                 <p>Proof of bona fide residency within Barangay Bagumbayan for utility or bank requirements.</p>
-                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #1A365D; background: rgba(43, 108, 176, 0.12); padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
 
             <article class="service-card doc-tab-btn" 
@@ -33,7 +33,7 @@
                      style="transition: all 0.2s ease; border: 2px solid transparent; user-select: none;">
                 <h3>Business Endorsement</h3>
                 <p>Barangay endorsement and clearances for micro-enterprises, sari-sari stores, and permits.</p>
-                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
+                <span class="badge-select" style="display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: #1A365D; background: rgba(43, 108, 176, 0.12); padding: 4px 10px; border-radius: 999px;">Click to Select &darr;</span>
             </article>
         </div>
 
@@ -41,10 +41,10 @@
         <section class="section" id="request-slip-section" style="margin-top: 24px;">
             <div class="content-grid request-layout">
                 <article class="card form-card">
-                    <div class="card-header" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 20px;">
+                    <div class="card-header" style="border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 20px;">
                         <div>
                             <p class="eyebrow compact">Official Request Slip</p>
-                            <h3 id="dynamic-doc-title" style="margin: 4px 0 0; color: #15803d; font-size: 1.35rem;">
+                            <h3 id="dynamic-doc-title" style="margin: 4px 0 0; color: var(--primary); font-size: 1.35rem;">
                                 Requesting: Barangay Clearance
                             </h3>
                         </div>
@@ -156,22 +156,22 @@
                     const isCurrent = tab.getAttribute('data-doctype') === docType;
                     const badge = tab.querySelector('.badge-select');
                     if (isCurrent) {
-                        tab.style.borderColor = '#16a34a';
-                        tab.style.boxShadow = '0 0 0 2px rgba(22, 163, 74, 0.25)';
-                        tab.style.backgroundColor = '#f0fdf4';
+                        tab.style.borderColor = '#2B6CB0';
+                        tab.style.boxShadow = '0 0 0 2px rgba(43, 108, 176, 0.25)';
+                        tab.style.backgroundColor = '#F7FAFC';
                         if (badge) {
                             badge.textContent = '✓ Currently Selected';
-                            badge.style.background = '#16a34a';
+                            badge.style.background = '#2B6CB0';
                             badge.style.color = '#ffffff';
                         }
                     } else {
-                        tab.style.borderColor = '#e2e8f0';
+                        tab.style.borderColor = 'rgba(45, 55, 72, 0.12)';
                         tab.style.boxShadow = 'none';
                         tab.style.backgroundColor = '#ffffff';
                         if (badge) {
                             badge.textContent = 'Click to Select';
-                            badge.style.background = '#f1f5f9';
-                            badge.style.color = '#475569';
+                            badge.style.background = 'rgba(43, 108, 176, 0.12)';
+                            badge.style.color = '#1A365D';
                         }
                     }
                 });

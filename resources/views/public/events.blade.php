@@ -28,8 +28,8 @@
 
                     <!-- Step 1: Event Selection -->
                     <label>
-                        <strong>Select Event <span style="color: #b55343;">*</span></strong>
-                        <select id="event-selector" name="event_id" required style="width: 100%; margin-top: 8px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(22, 48, 36, 0.18); font: inherit; background: #fff; font-weight: 600;">
+                        <strong>Select Event <span style="color: #C53030;">*</span></strong>
+                        <select id="event-selector" name="event_id" required style="width: 100%; margin-top: 8px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(45, 55, 72, 0.16); font: inherit; background: #fff; font-weight: 600;">
                             <option value="">-- Choose an upcoming activity --</option>
                             @foreach ($events as $event)
                                 @php
@@ -45,8 +45,8 @@
                     </label>
 
                     <!-- Event Summary Card -->
-                    <div id="event-highlight-card" style="display: none; padding: 14px 16px; background: rgba(45, 124, 84, 0.08); border-left: 4px solid var(--success); border-radius: 10px; font-size: 0.88rem;">
-                        <strong id="highlight-title" style="display: block; font-size: 1rem; color: var(--text);"></strong>
+                    <div id="event-highlight-card" style="display: none; padding: 14px 16px; background: rgba(43, 108, 176, 0.08); border-left: 4px solid var(--secondary); border-radius: 10px; font-size: 0.88rem;">
+                        <strong id="highlight-title" style="display: block; font-size: 1rem; color: var(--primary);"></strong>
                         <div id="highlight-datetime" style="margin-top: 4px; color: var(--muted);"></div>
                         <div id="highlight-venue" style="color: var(--muted);"></div>
                         <p id="highlight-summary" style="margin-top: 6px; font-style: italic; color: var(--text);"></p>
@@ -58,18 +58,18 @@
                         <!-- 3 Name Fields Grid -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
                             <label>
-                                <strong>First Name <span style="color: #b55343;">*</span></strong>
-                                <input type="text" id="input-first-name" name="first_name" value="{{ old('first_name') }}" placeholder="e.g. Francis Julius" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(22, 48, 36, 0.12); font: inherit;">
+                                <strong>First Name <span style="color: #C53030;">*</span></strong>
+                                <input type="text" id="input-first-name" name="first_name" value="{{ old('first_name') }}" placeholder="e.g. Francis Julius" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(45, 55, 72, 0.14); font: inherit;">
                             </label>
 
                             <label>
                                 <strong>Middle Name <small style="color: var(--muted); font-weight: 400;">(Optional)</small></strong>
-                                <input type="text" id="input-middle-name" name="middle_name" value="{{ old('middle_name') }}" placeholder="e.g. Galias" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(22, 48, 36, 0.12); font: inherit;">
+                                <input type="text" id="input-middle-name" name="middle_name" value="{{ old('middle_name') }}" placeholder="e.g. Galias" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(45, 55, 72, 0.14); font: inherit;">
                             </label>
 
                             <label>
-                                <strong>Last Name <span style="color: #b55343;">*</span></strong>
-                                <input type="text" id="input-last-name" name="last_name" value="{{ old('last_name') }}" placeholder="e.g. Castuera" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(22, 48, 36, 0.12); font: inherit;">
+                                <strong>Last Name <span style="color: #C53030;">*</span></strong>
+                                <input type="text" id="input-last-name" name="last_name" value="{{ old('last_name') }}" placeholder="e.g. Castuera" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(45, 55, 72, 0.14); font: inherit;">
                             </label>
                         </div>
 
@@ -77,12 +77,12 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <label>
                                 <strong>Contact Number</strong>
-                                <input type="text" id="input-contact-number" name="contact_number" value="{{ old('contact_number') }}" placeholder="e.g. 09093241232" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(22, 48, 36, 0.12); font: inherit;">
+                                <input type="text" id="input-contact-number" name="contact_number" value="{{ old('contact_number') }}" placeholder="e.g. 09093241232" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(45, 55, 72, 0.14); font: inherit;">
                             </label>
 
                             <label>
                                 <strong>Purok / Zone</strong>
-                                <input type="text" id="input-purok" name="purok" value="{{ old('purok') }}" placeholder="e.g. Purok 6" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(22, 48, 36, 0.12); font: inherit;">
+                                <input type="text" id="input-purok" name="purok" value="{{ old('purok') }}" placeholder="e.g. Purok 6" style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(45, 55, 72, 0.14); font: inherit;">
                             </label>
                         </div>
 
@@ -92,7 +92,7 @@
                     </div>
 
                     @if ($errors->any())
-                        <div class="list-item" style="color: #b55343; border-left: 3px solid #b55343; padding-left: 10px; margin-top: 10px;">
+                        <div class="list-item" style="color: #C53030; border-left: 3px solid #C53030; padding-left: 10px; margin-top: 10px;">
                             @foreach ($errors->all() as $error)
                                 <div>{{ $error }}</div>
                             @endforeach
