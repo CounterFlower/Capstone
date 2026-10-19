@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\IncidentBlotterController;
 use App\Http\Controllers\PublicPageController;
+use App\Http\Controllers\ResidentProfileController;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+
 Route::get('/photos/{filename}', function (string $filename) {
     $safeFilename = basename($filename);
 

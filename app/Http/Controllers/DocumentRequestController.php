@@ -48,7 +48,7 @@ class DocumentRequestController extends Controller
             ->with('status', 'Document request status updated successfully.');
     }
 
-    public function printDocument($request_id)
+    public function printDocument(int $request_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -106,7 +106,7 @@ class DocumentRequestController extends Controller
         ]);
     }
 
-    public function verifyPublicDocument($hash)
+    public function verifyPublicDocument(string $hash)
     {
         $document = DB::table('document_request')
             ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')

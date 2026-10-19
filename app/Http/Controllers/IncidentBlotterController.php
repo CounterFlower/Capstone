@@ -10,7 +10,7 @@ class IncidentBlotterController extends Controller
 {
     public function __construct(protected ResidentService $residentService) {}
 
-    public function reviewIncident($incident_id)
+    public function reviewIncident(int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -38,7 +38,7 @@ class IncidentBlotterController extends Controller
         ]);
     }
 
-    public function printIncident($incident_id)
+    public function printIncident(int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -66,7 +66,7 @@ class IncidentBlotterController extends Controller
         ]);
     }
 
-    public function updateIncidentStatus(Request $request, $incident_id)
+    public function updateIncidentStatus(Request $request, int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
