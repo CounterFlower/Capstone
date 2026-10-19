@@ -10,7 +10,7 @@ class IncidentBlotterController extends Controller
 {
     public function __construct(protected ResidentService $residentService) {}
 
-    public function reviewIncident($incident_id)
+    public function reviewIncident(int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -38,9 +38,7 @@ class IncidentBlotterController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
-=======
-    public function printIncident($incident_id)
+    public function printIncident(int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -68,8 +66,7 @@ class IncidentBlotterController extends Controller
         ]);
     }
 
->>>>>>> origin/main
-    public function updateIncidentStatus(Request $request, $incident_id)
+    public function updateIncidentStatus(Request $request, int $incident_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -85,11 +82,7 @@ class IncidentBlotterController extends Controller
             (int) (session('admin_user_id') ?? 1)
         );
 
-<<<<<<< HEAD
-        return redirect()->route('admin.incidents.review', $incident_id)
-=======
         return redirect()->route('admin.dashboard', ['tab' => 'cases'])
->>>>>>> origin/main
             ->with('status', 'Case status updated successfully to ' . $payload['status'] . '.');
     }
 }

@@ -6,10 +6,7 @@ use App\Models\DocumentRequest;
 use App\Services\ResidentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Str;
->>>>>>> origin/main
 
 class DocumentRequestController extends Controller
 {
@@ -51,7 +48,7 @@ class DocumentRequestController extends Controller
             ->with('status', 'Document request status updated successfully.');
     }
 
-    public function printDocument($request_id)
+    public function printDocument(int $request_id)
     {
         if (! session('is_admin')) {
             return redirect()->route('admin.login');
@@ -75,8 +72,6 @@ class DocumentRequestController extends Controller
 
         abort_if(! $document, 404, 'Document request record not found.');
 
-<<<<<<< HEAD
-=======
         if (empty($document->QR_Hash)) {
             $qrHash = hash('sha256', $document->Request_ID . '-' . $document->Resident_ID . '-' . Str::random(16));
 
@@ -89,7 +84,6 @@ class DocumentRequestController extends Controller
 
         $verifyUrl = rtrim(config('app.url'), '/') . '/verify/document/' . $document->QR_Hash;
 
->>>>>>> origin/main
         $currentUserId = session('admin_user_id') ?? 1;
         $currentUser = DB::table('system_user')->where('User_ID', $currentUserId)->first();
 
@@ -108,13 +102,11 @@ class DocumentRequestController extends Controller
             'staffName'   => $staffName,
             'staffRole'   => $staffRole,
             'captainName' => $captainName,
-<<<<<<< HEAD
-=======
             'verifyUrl'   => $verifyUrl,
         ]);
     }
 
-    public function verifyPublicDocument($hash)
+    public function verifyPublicDocument(string $hash)
     {
         $document = DB::table('document_request')
             ->leftJoin('resident', 'document_request.Resident_ID', '=', 'resident.Resident_ID')
@@ -147,7 +139,6 @@ class DocumentRequestController extends Controller
             'isValid' => true,
             'document' => $document,
             'captainName' => $captain->Full_Name ?? 'Prince Marvin E. Azul',
->>>>>>> origin/main
         ]);
     }
 }
