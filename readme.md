@@ -64,3 +64,23 @@ Setup Steps
    ```bash
    git clone [https://github.com/CounterFlower/Capstone.git](https://github.com/CounterFlower/Capstone.git)
    cd Capstone
+   ```
+
+------------------------------------------------------------------------------------------------------------------
+Event Image Uploads
+
+Event cover images are uploaded to Cloudinary. Configure these environment variables locally and on the deployed Laravel service:
+
+```env
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
+
+Use the Cloudinary account's API credentials; keep the API secret private. Then deploy the application and run:
+
+```bash
+php artisan migrate --force
+```
+
+The migration expands the event cover-image column to hold secure Cloudinary URLs. Newly uploaded event images are stored in Cloudinary, and the database stores each image's URL.

@@ -30,6 +30,7 @@ public function home()
                 'title'       => $event->Event_Name,
                 'description' => $event->Description ?? $event->description ?? 'Barangay outreach and resident community program.',
                 'image'       => ! empty($event->Cover_Image) ? $event->Cover_Image : $fallbackFile,
+                'image_is_url' => ! empty($event->Cover_Image) && str_starts_with($event->Cover_Image, 'https://res.cloudinary.com/'),
                 'date'        => \Carbon\Carbon::parse($event->Event_Date)->format('M d, Y'),
                 'venue'       => $event->Location ?? 'Barangay Hall',
             ];

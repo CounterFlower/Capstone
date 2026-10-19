@@ -310,7 +310,7 @@
             <div class="photo-grid">
                 @forelse ($galleryEvents as $eventItem)
                     <article class="photo-card">
-                        <img src="{{ route('public.photos', ['filename' => $eventItem->image]) }}" alt="{{ $eventItem->title }}">
+                        <img src="{{ $eventItem->image_is_url ? $eventItem->image : route('public.photos', ['filename' => $eventItem->image]) }}" alt="{{ $eventItem->title }}">
                         <div class="photo-copy">
                             <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">
                                 {{ $eventItem->date }} &bull; {{ $eventItem->venue }}

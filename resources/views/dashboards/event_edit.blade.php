@@ -58,7 +58,7 @@
             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;">Cover Image</label>
             @if ($event->Cover_Image)
                 <div style="margin-bottom: 8px;">
-                    <img src="{{ route('public.photos', ['filename' => $event->Cover_Image]) }}" alt="Current Cover" style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <img src="{{ str_starts_with($event->Cover_Image, 'https://res.cloudinary.com/') ? $event->Cover_Image : route('public.photos', ['filename' => $event->Cover_Image]) }}" alt="Current Cover" style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 </div>
             @endif
             <input type="file" name="cover_image" accept="image/*" style="width: 100%; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; background: #f8fafc;">
