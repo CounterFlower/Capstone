@@ -163,6 +163,16 @@ class ResidentService
 
     public function approveDocumentRequest(int $requestId): bool
     {
+        $docRequest = DB::table('document_request')
+            ->where('Request_ID', $requestId)
+            ->first();
+
+        if ($docRequest && strcasecmp(trim((string) ($docRequest->Document_Type ?? '')), 'Barangay Clearance') === 0) {
+            if ($this->hasEscalatedBlotterCase((int) $docRequest->Resident_ID)) {
+                return false;
+            }
+        }
+
         return $this->residentRepository->approveDocumentRequest($requestId);
     }
 
@@ -271,6 +281,15 @@ class ResidentService
             throw new RuntimeException('No resident record matched the details you entered. Please check your name, birthday, contact number, or address.');
         }
 
+        // Block Barangay Clearance requests ONLY if the resident is a respondent in an Escalated blotter case
+        if (strcasecmp(trim((string) ($payload['document_type'] ?? '')), 'Barangay Clearance') === 0) {
+            if ($this->hasEscalatedBlotterCase((int) $resident->Resident_ID)) {
+                throw new RuntimeException(
+                    'Request Denied: You cannot request a Barangay Clearance while you have an active Escalated blotter case. You may still request other certificates (e.g., Certificate of Residency, Certificate of Indigency, or Business Endorsement).'
+                );
+            }
+        }
+
         $requestId = $this->residentRepository->createDocumentRequest([
             'resident_id'   => $resident->Resident_ID,
             'years_stayed'  => $payload['years_stayed'] ?? null,
@@ -282,6 +301,19 @@ class ResidentService
             'request_id'    => $requestId,
             'resident_name' => $resident->First_Name.' '.($resident->Middle_Name ? $resident->Middle_Name.' ' : '').$resident->Last_Name,
         ];
+    }
+
+    /**
+     * Check if the given resident is listed as the respondent in an escalated blotter case.
+     */
+    private function hasEscalatedBlotterCase(int $residentId): bool
+    {
+        $caseTable = Schema::hasTable('incident_blotter') ? 'incident_blotter' : 'cases';
+
+        return DB::table($caseTable)
+            ->where('Respondent_Id', $residentId)
+            ->whereRaw('LOWER(TRIM(Resolution_Status)) = ?', ['escalated'])
+            ->exists();
     }
 
    public function getPendingDocumentRequests()
