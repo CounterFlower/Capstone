@@ -25,7 +25,6 @@
         <div>
             <p class="eyebrow">Administrative Dashboard</p>
             <h1>Barangay Management Control Panel</h1>
-            <p>Prototype admin view for case monitoring, resident profile records, document request monitoring, event registrations, and analytics reporting.</p>
         </div>
         <div class="pill">Logged in as admin</div>
     </header>
@@ -36,7 +35,6 @@
         <button type="button" class="tab" data-tab-target="residents">Resident Profiles<small>Sample records table</small></button>
         <button type="button" class="tab" data-tab-target="requests">Document Requests<small>Service request monitoring</small></button>
         <button type="button" class="tab" data-tab-target="events">Event Sign-Ups<small>View resident activity registrations</small></button>
-        <button type="button" class="tab" data-tab-target="analytics">Analytics<small>Barangay statistics and reporting</small></button>
     </section>
 
     <!-- OVERVIEW TAB -->
