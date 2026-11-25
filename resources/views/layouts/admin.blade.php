@@ -732,10 +732,6 @@
                     Event Sign-Ups
                     <small>Review resident activity registrations</small>
                 </button>
-                <button type="button" class="side-link" data-tab-target="analytics">
-                    Analytics
-                    <small>Sample statistical layouts</small>
-                </button>
             </nav>
 
             <div class="side-actions">
