@@ -582,16 +582,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <button type="submit" class="form-submit">Save resident profile</button>
                 </form>
             </article>
-
-            <article class="card">
-                <h2>Records Monitoring</h2>
-                <div class="list">
-                    <div class="list-item"><strong>Total households</strong> 342 grouped resident records.</div>
-                    <div class="list-item"><strong>Incomplete records</strong> 27 profiles need updated contact or identification details.</div>
-                    <div class="list-item"><strong>Priority groups</strong> 119 senior citizens and 87 solo parent records tagged for service support.</div>
-                    <div class="list-item"><strong>Recent profile updates</strong> 18 resident records were edited within the last 7 days.</div>
-                </div>
-            </article>
         </section>
     </section>
 
