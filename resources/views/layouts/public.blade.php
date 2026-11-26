@@ -688,10 +688,10 @@
             </div>
 
             <nav class="nav">
-                <a href="{{ route('home') }}">Home</a>
-                <a href="{{ route('public.incidents') }}">Incident Reporting</a>
-                <a href="{{ route('public.documents') }}">Document Requests</a>
-                <a href="{{ route('public.events') }}">Event Registration</a>
+                <a class="button secondary" href="{{ route('home') }}">Home</a>
+                <a class="button secondary" href="{{ route('public.incidents') }}">Incident Reporting</a>
+                <a class="button secondary" href="{{ route('public.documents') }}">Document Requests</a>
+                <a class="button secondary" href="{{ route('public.events') }}">Event Registration</a>
                 @if (session('is_admin'))
                     <a class="button secondary" href="{{ route('admin.dashboard') }}">Admin Dashboard</a>
                 @else
