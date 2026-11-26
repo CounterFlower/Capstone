@@ -695,7 +695,7 @@
                 @if (session('is_admin'))
                     <a class="button secondary" href="{{ route('admin.dashboard') }}">Admin Dashboard</a>
                 @else
-                    <a class="button primary" href="{{ route('admin.login') }}">Admin Login</a>
+                    <strong>Welcome Bagumbeño</strong>
                 @endif
             </nav>
         </div>
