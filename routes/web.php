@@ -11,6 +11,7 @@ use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\ResidentProfileController;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountManagementController;
 
 Route::get('/photos/{filename}', function (string $filename) {
     $safeFilename = basename($filename);
@@ -71,3 +72,8 @@ Route::middleware(['admin.inactivity'])->group(function () {
 });
 
 Route::get('/verify/document/{hash}', [DocumentRequestController::class, 'verifyPublicDocument'])->name('document.verify');
+Route::post('/admin/accounts/store', [AccountManagementController::class, 'store'])
+    ->name('admin.accounts.store');
+
+Route::post('/admin/accounts/change-password', [AccountManagementController::class, 'changePassword'])
+    ->name('admin.accounts.changePassword');
