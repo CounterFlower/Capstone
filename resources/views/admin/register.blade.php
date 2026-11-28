@@ -171,7 +171,7 @@
         <section class="intro">
             <p class="eyebrow">Administrative Access</p>
             <h1>Create an Official Account</h1>
-            <p>Register a new barangay official record in the live system_user table with role-based access permissions for Punong Barangay / Super Admin, Barangay Secretary, or Barangay Health Worker (BHW).</p>
+            <p>Register a new barangay official record in the live system user table with role-based access permissions for Punong Barangay / Super Admin, Barangay Secretary, or Barangay Health Worker (BHW).</p>
         </section>
 
         <section class="panel">
