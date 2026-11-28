@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Register Admin</title>
+    <title>Register Official Account</title>
     <style>
         :root {
             --text: #2D3748;
@@ -101,7 +101,7 @@
             color: var(--text);
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 14px 16px;
             border-radius: 14px;
@@ -112,7 +112,7 @@
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: 0;
             border-color: var(--secondary);
             box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.14);
@@ -155,68 +155,4 @@
 
         .error-box {
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(197, 48, 48, 0.1);
-            color: var(--danger);
-            border-left: 4px solid var(--danger);
-        }
-
-        @media (max-width: 920px) {
-            .login-shell { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    <div class="login-shell">
-        <section class="intro">
-            <p class="eyebrow">Administrative Access</p>
-            <h1>Create an Admin Account</h1>
-            <p>Register a new administrator record in the live system_user table so the barangay dashboard can authenticate against the database.</p>
-        </section>
-
-        <section class="panel">
-            <p class="eyebrow">Registration</p>
-            <h2>New administrator profile</h2>
-
-            @if ($errors->any())
-                <div class="error-box" style="margin-top: 18px;">
-                    @foreach ($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('admin.register.submit') }}">
-                @csrf
-
-                <label>
-                    Username
-                    <input type="text" name="username" value="{{ old('username') }}" required>
-                </label>
-
-                <label>
-                    Full Name
-                    <input type="text" name="full_name" value="{{ old('full_name') }}" required>
-                </label>
-
-                <label>
-                    Password
-                    <input type="password" name="password" required>
-                </label>
-
-                <label>
-                    Confirm Password
-                    <input type="password" name="password_confirmation" required>
-                </label>
-
-                <button type="submit">Create Admin Account</button>
-            </form>
-
-            <div style="margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                <a class="back-link" href="{{ route('admin.login') }}">Back to Login</a>
-                <a class="back-link" href="{{ route('home') }}">Back to Public Site</a>
-            </div>
-        </section>
-    </div>
-</body>
-</html>
+            border-radius: 1
