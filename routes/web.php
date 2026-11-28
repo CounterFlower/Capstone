@@ -62,4 +62,16 @@ Route::middleware(['admin.inactivity'])->group(function () {
     Route::put('/admin/events/{event_id}', [EventController::class, 'update'])->name('admin.events.update');
     Route::delete('/admin/events/{event_id}', [EventController::class, 'destroy'])->name('admin.events.destroy');
     Route::get('/admin/incidents/{incident_id}/review', [IncidentBlotterController::class, 'reviewIncident'])->name('admin.incidents.review');
-    Route::get('/admin/incidents/{incident_id}/print', [IncidentBlotterController::class, 'printIncident'])->name('admin.
+    Route::get('/admin/incidents/{incident_id}/print', [IncidentBlotterController::class, 'printIncident'])->name('admin.incidents.print');
+    Route::patch('/admin/incidents/{incident_id}/status', [IncidentBlotterController::class, 'updateIncidentStatus'])->name('admin.incidents.update-status');
+    Route::get('/admin', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
+    Route::post('/admin/document-requests/status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status-legacy');
+    Route::post('/admin/documents/update-status', [DocumentRequestController::class, 'updateDocumentStatus'])->name('admin.documents.update-status');
+    Route::get('/admin/documents/{request_id}/print', [DocumentRequestController::class, 'printDocument'])->name('admin.documents.print');
+
+    // Super Admin Official Account Management (protected by admin.inactivity)
+    Route::post('/admin/accounts/store', [AccountManagementController::class, 'store'])->name('admin.accounts.store');
+    Route::post('/admin/accounts/change-password', [AccountManagementController::class, 'changePassword'])->name('admin.accounts.changePassword');
+});
+
+Route::get('/verify/document/{hash}', [DocumentRequestController::class, 'verifyPublicDocument'])->name('document.verify');
