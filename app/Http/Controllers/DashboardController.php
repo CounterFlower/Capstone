@@ -41,6 +41,19 @@ class DashboardController extends Controller
 
         session(['admin_last_activity' => time()]);
 
+        // Verify current user & check if they hold Super Admin privileges
+        $currentUser = DB::table('system_user')
+            ->where('User_ID', session('admin_user_id'))
+            ->first();
+
+        $currentRole = strtolower(trim((string) ($currentUser->Role ?? session('admin_role', ''))));
+        $isSuperAdmin = in_array($currentRole, ['super admin', 'superadmin', 'punong barangay'], true);
+
+        // Load all official accounts only if the logged-in user is Super Admin
+        $officialAccounts = $isSuperAdmin
+            ? DB::table('system_user')->orderBy('User_ID', 'asc')->get()
+            : collect();
+
         $dashboardData = $this->residentService->getDashboardData();
 
         $events = DB::table('event')
@@ -71,9 +84,16 @@ class DashboardController extends Controller
             ? (int) $request->input('event_filter')
             : null;
 
+        $requestedTab = $request->query('tab', 'overview');
+
+        // Prevent non-Super Admins from forcing ?tab=accounts in the URL
+        if ($requestedTab === 'accounts' && ! $isSuperAdmin) {
+            $requestedTab = 'overview';
+        }
+
         $activeTab = $request->filled('event_filter')
             ? 'events'
-            : $request->query('tab', 'overview');
+            : $requestedTab;
 
         return view('admin.dashboard', array_merge($dashboardData, [
             'caseRecords'         => $this->residentService->getIncidentCases(),
@@ -82,6 +102,8 @@ class DashboardController extends Controller
             'eventRegistrations'  => $this->residentRepository->getEventRegistrations($selectedEventFilter),
             'selectedEventFilter' => $selectedEventFilter,
             'activeTab'           => $activeTab,
+            'isSuperAdmin'        => $isSuperAdmin,
+            'officialAccounts'    => $officialAccounts,
         ]));
     }
 }
