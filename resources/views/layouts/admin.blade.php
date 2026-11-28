@@ -217,7 +217,7 @@
         }
 
         .tabs {
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
             margin-bottom: 22px;
         }
 
@@ -711,27 +711,54 @@
                 </div>
             </div>
 
+            @php
+                $navRole = strtolower(trim((string) session('admin_role', '')));
+                $navIsSuperAdmin = $isSuperAdmin ?? in_array($navRole, ['super admin', 'superadmin', 'punong barangay'], true);
+                $navIsBhw = $isBhw ?? in_array($navRole, ['bhw', 'barangay health worker'], true);
+            @endphp
+
             <nav class="side-links">
+                {{-- Visible to All Roles (Super Admin, Staff, BHW) --}}
                 <button type="button" class="side-link" data-tab-target="overview">
                     Overview
                     <small>Service load and headline metrics</small>
                 </button>
-                <button type="button" class="side-link" data-tab-target="cases">
-                    Case Monitoring
-                    <small>Track complaints and incident reports</small>
-                </button>
+
+                {{-- Visible to Super Admin & Staff Only (Hidden from BHW) --}}
+                @if (! $navIsBhw)
+                    <button type="button" class="side-link" data-tab-target="cases">
+                        Case Monitoring
+                        <small>Track complaints and incident reports</small>
+                    </button>
+                @endif
+
+                {{-- Visible to All Roles (Super Admin, Staff, BHW) --}}
                 <button type="button" class="side-link" data-tab-target="residents">
                     Resident Profiles
                     <small>Sample resident records table</small>
                 </button>
-                <button type="button" class="side-link" data-tab-target="requests">
-                    Document Requests
-                    <small>Monitor resident document requests</small>
-                </button>
+
+                {{-- Visible to Super Admin & Staff Only (Hidden from BHW) --}}
+                @if (! $navIsBhw)
+                    <button type="button" class="side-link" data-tab-target="requests">
+                        Document Requests
+                        <small>Monitor resident document requests</small>
+                    </button>
+                @endif
+
+                {{-- Visible to All Roles (Super Admin, Staff, BHW) --}}
                 <button type="button" class="side-link" data-tab-target="events">
                     Event Sign-Ups
                     <small>Review resident activity registrations</small>
                 </button>
+
+                {{-- Visible to Super Admin / Punong Barangay Only --}}
+                @if ($navIsSuperAdmin)
+                    <button type="button" class="side-link" data-tab-target="accounts">
+                        Official Accounts
+                        <small>Manage barangay staff & passwords</small>
+                    </button>
+                @endif
             </nav>
 
             <div class="side-actions">
@@ -754,6 +781,11 @@
         const activeTab = document.body.dataset.activeTab || 'overview';
 
         function activateTab(target) {
+            if (panels.length === 0) {
+                window.location.href = "{{ route('admin.dashboard') }}?tab=" + encodeURIComponent(target);
+                return;
+            }
+
             tabs.forEach((tab) => {
                 tab.classList.toggle('active', tab.dataset.tabTarget === target);
             });
@@ -767,7 +799,7 @@
             tab.addEventListener('click', () => activateTab(tab.dataset.tabTarget));
         });
 
-        if (tabs.length > 0) {
+        if (tabs.length > 0 && panels.length > 0) {
             activateTab(activeTab);
         }
 
