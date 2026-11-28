@@ -155,4 +155,84 @@
 
         .error-box {
             padding: 12px 14px;
-            border-radius: 1
+            border-radius: 14px;
+            background: rgba(197, 48, 48, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        @media (max-width: 920px) {
+            .login-shell { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <section class="intro">
+            <p class="eyebrow">Administrative Access</p>
+            <h1>Create an Official Account</h1>
+            <p>Register a new barangay official record in the live system_user table with role-based access permissions for Punong Barangay / Super Admin, Barangay Secretary, or Barangay Health Worker (BHW).</p>
+        </section>
+
+        <section class="panel">
+            <p class="eyebrow">Registration</p>
+            <h2>New official profile</h2>
+
+            @if ($errors->any())
+                <div class="error-box" style="margin-top: 18px;">
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('admin.register.submit') }}">
+                @csrf
+
+                <label>
+                    Username
+                    <input type="text" name="username" value="{{ old('username') }}" required>
+                </label>
+
+                <label>
+                    Full Name
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" required>
+                </label>
+
+                <label>
+                    Account Role
+                    <select name="role" required>
+                        <option value="" disabled {{ old('role') ? '' : 'selected' }}>-- Select Official Role --</option>
+                        <option value="Super Admin" {{ old('role') === 'Super Admin' ? 'selected' : '' }}>
+                            Super Admin / Punong Barangay
+                        </option>
+                        <option value="Barangay Secretary" {{ old('role') === 'Barangay Secretary' ? 'selected' : '' }}>
+                            Barangay Staff / Secretary
+                        </option>
+                        <option value="BHW" {{ old('role') === 'BHW' ? 'selected' : '' }}>
+                            Barangay Health Worker (BHW)
+                        </option>
+                    </select>
+                </label>
+
+                <label>
+                    Password
+                    <input type="password" name="password" required>
+                </label>
+
+                <label>
+                    Confirm Password
+                    <input type="password" name="password_confirmation" required>
+                </label>
+
+                <button type="submit">Create Official Account</button>
+            </form>
+
+            <div style="margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <a class="back-link" href="{{ route('admin.login') }}">Back to Login</a>
+                <a class="back-link" href="{{ route('home') }}">Back to Public Site</a>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
