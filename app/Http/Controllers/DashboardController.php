@@ -41,13 +41,26 @@ class DashboardController extends Controller
 
         session(['admin_last_activity' => time()]);
 
-        // Verify current user & check if they hold Super Admin privileges
+        // Verify current user & resolve RBAC role flags
         $currentUser = DB::table('system_user')
             ->where('User_ID', session('admin_user_id'))
             ->first();
 
         $currentRole = strtolower(trim((string) ($currentUser->Role ?? session('admin_role', ''))));
+
         $isSuperAdmin = in_array($currentRole, ['super admin', 'superadmin', 'punong barangay'], true);
+        $isBhw        = in_array($currentRole, ['bhw', 'barangay health worker'], true);
+        $isStaff      = ! $isSuperAdmin && ! $isBhw; // Barangay Secretary / Staff / legacy admin
+
+        // Define allowed tabs per role
+        if ($isSuperAdmin) {
+            $allowedTabs = ['overview', 'cases', 'residents', 'requests', 'documents', 'events', 'events-attendees', 'accounts'];
+        } elseif ($isStaff) {
+            $allowedTabs = ['overview', 'cases', 'residents', 'requests', 'documents', 'events', 'events-attendees'];
+        } else {
+            // BHW: Overview, Resident Profiles, and Event Sign-Ups only
+            $allowedTabs = ['overview', 'residents', 'events', 'events-attendees'];
+        }
 
         // Load all official accounts only if the logged-in user is Super Admin
         $officialAccounts = $isSuperAdmin
@@ -84,25 +97,25 @@ class DashboardController extends Controller
             ? (int) $request->input('event_filter')
             : null;
 
-        $requestedTab = $request->query('tab', 'overview');
-
-        // Prevent non-Super Admins from forcing ?tab=accounts in the URL
-        if ($requestedTab === 'accounts' && ! $isSuperAdmin) {
-            $requestedTab = 'overview';
-        }
-
-        $activeTab = $request->filled('event_filter')
+        $requestedTab = $request->filled('event_filter')
             ? 'events'
-            : $requestedTab;
+            : $request->query('tab', 'overview');
+
+        // Block unauthorized tab access via URL parameter
+        $activeTab = in_array($requestedTab, $allowedTabs, true)
+            ? $requestedTab
+            : 'overview';
 
         return view('admin.dashboard', array_merge($dashboardData, [
-            'caseRecords'         => $this->residentService->getIncidentCases(),
+            'caseRecords'         => $isBhw ? collect() : $this->residentService->getIncidentCases(),
             'events'              => $events,
             'eventsList'          => $events,
             'eventRegistrations'  => $this->residentRepository->getEventRegistrations($selectedEventFilter),
             'selectedEventFilter' => $selectedEventFilter,
             'activeTab'           => $activeTab,
             'isSuperAdmin'        => $isSuperAdmin,
+            'isStaff'             => $isStaff,
+            'isBhw'               => $isBhw,
             'officialAccounts'    => $officialAccounts,
         ]));
     }
