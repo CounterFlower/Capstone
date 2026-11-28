@@ -35,8 +35,177 @@
         <button type="button" class="tab" data-tab-target="residents">Resident Profiles<small>Sample records table</small></button>
         <button type="button" class="tab" data-tab-target="requests">Document Requests<small>Service request monitoring</small></button>
         <button type="button" class="tab" data-tab-target="events">Event Sign-Ups<small>View resident activity registrations</small></button>
+        @if ($isSuperAdmin ?? false)
+            <button type="button" class="tab {{ ($activeTab ?? '') === 'accounts' ? 'active' : '' }}" data-tab-target="accounts">
+                Official Accounts<small>Manage barangay staff & passwords</small>
+            </button>
+        @endif
     </section>
+@if ($isSuperAdmin ?? false)
+        <!-- ACCOUNTS TAB (SUPER ADMIN ONLY) -->
+        <section class="tab-panel {{ ($activeTab ?? '') === 'accounts' ? 'active' : '' }}" data-tab-panel="accounts">
+            @if (session('status'))
+                <div style="padding: 12px 16px; background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; border-radius: 8px; margin-bottom: 20px;">
+                    {{ session('status') }}
+                </div>
+            @endif
 
+            @if ($errors->has('super_admin_password') || $errors->has('new_password') || $errors->has('username') || $errors->has('password'))
+                <div style="padding: 12px 16px; background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; border-radius: 8px; margin-bottom: 20px;">
+                    <ul style="margin: 0; padding-left: 18px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <section class="panels">
+                <!-- Existing Barangay Official Accounts Table -->
+                <article class="card">
+                    <div style="margin-bottom: 16px;">
+                        <h2 style="margin: 0;">Barangay Official Accounts</h2>
+                        <p class="subtext">Manage system access for barangay officials and reset account passwords.</p>
+                    </div>
+
+                    <div class="table-wrap" style="overflow-x: auto;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Full Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th style="text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($officialAccounts ?? [] as $account)
+                                    <tr>
+                                        <td><strong>#{{ $account->User_ID }}</strong></td>
+                                        <td>{{ $account->Full_Name ?? 'N/A' }}</td>
+                                        <td>{{ $account->Username }}</td>
+                                        <td>
+                                            <span class="badge good">{{ $account->Role ?? 'Official' }}</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <button type="button"
+                                                class="form-submit"
+                                                style="padding: 6px 12px; font-size: 0.78rem; background: #d97706;"
+                                                onclick="openPasswordModal({{ $account->User_ID }}, '{{ addslashes($account->Full_Name ?? $account->Username) }}')">
+                                                Change Password
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">No official accounts found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <!-- Create New Barangay Official Account Form -->
+                <article class="card">
+                    <h2>Create Official Account</h2>
+                    <p class="subtext" style="margin-bottom: 16px;">Register a new barangay official account. Requires your Super Admin password to authorize.</p>
+
+                    <form class="admin-form" method="POST" action="{{ route('admin.accounts.store') }}">
+                        @csrf
+                        <span class="form-section-label">Account Details</span>
+                        <div class="form-grid">
+                            <label class="form-field">Full name
+                                <input type="text" name="full_name" value="{{ old('full_name') }}" placeholder="e.g. Hon. Juan Dela Cruz" required>
+                            </label>
+                            <label class="form-field">Username
+                                <input type="text" name="username" value="{{ old('username') }}" placeholder="e.g. sec_juan" required>
+                            </label>
+                            <label class="form-field">Official Role
+                                <select name="role" required style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font: inherit;">
+                                    <option value="Barangay Secretary">Barangay Secretary</option>
+                                    <option value="Barangay Treasurer">Barangay Treasurer</option>
+                                    <option value="Barangay Kagawad">Barangay Kagawad</option>
+                                    <option value="Administrative Clerk">Administrative Clerk</option>
+                                    <option value="BHW">Barangay Health Worker (BHW)</option>
+                                    <option value="Super Admin">Super Admin</option>
+                                </select>
+                            </label>
+                            <label class="form-field">Account Password
+                                <input type="password" name="password" minlength="8" placeholder="Minimum 8 characters" required>
+                            </label>
+                            <label class="form-field">Confirm Account Password
+                                <input type="password" name="password_confirmation" minlength="8" placeholder="Re-enter new account password" required>
+                            </label>
+                        </div>
+
+                        <span class="form-section-label" style="color: #92400e;">Super Admin Verification</span>
+                        <div class="form-grid">
+                            <label class="form-field" style="color: #92400e;">Your Super Admin Password
+                                <input type="password" name="super_admin_password" placeholder="Enter your current password to confirm" required style="border-color: #f59e0b; background: #fffbeb;">
+                            </label>
+                        </div>
+
+                        <button type="submit" class="form-submit" style="margin-top: 16px;">Create Official Account</button>
+                    </form>
+                </article>
+            </section>
+        </section>
+
+        <!-- Password Change & Super Admin Re-Verification Modal -->
+        <div id="passwordResetModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.6); align-items: center; justify-content: center; padding: 16px;">
+            <div class="card" style="max-width: 440px; width: 100%; background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+                <h2 style="margin: 0 0 6px 0; font-size: 1.2rem;">Change Official Account Password</h2>
+                <p class="subtext" style="margin: 0 0 16px 0;">
+                    Updating password for: <strong id="modalTargetName" style="color: #0f172a;"></strong>
+                </p>
+
+                <form class="admin-form" method="POST" action="{{ route('admin.accounts.changePassword') }}">
+                    @csrf
+                    <input type="hidden" name="target_user_id" id="modalTargetUserId">
+
+                    <div class="form-grid" style="grid-template-columns: 1fr;">
+                        <label class="form-field">New Password
+                            <input type="password" name="new_password" minlength="8" placeholder="Minimum 8 characters" required>
+                        </label>
+
+                        <label class="form-field">Confirm New Password
+                            <input type="password" name="new_password_confirmation" minlength="8" placeholder="Re-enter new password" required>
+                        </label>
+
+                        <div style="padding: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; margin-top: 4px;">
+                            <label class="form-field" style="color: #92400e; margin: 0;">
+                                Security Verification: Enter Your Current Password
+                                <input type="password" name="super_admin_password" placeholder="Your logged-in password" required style="margin-top: 6px; border-color: #f59e0b; background: #ffffff;">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="closePasswordModal()" class="button secondary" style="padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="form-submit" style="padding: 8px 16px;">
+                            Verify & Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openPasswordModal(userId, fullName) {
+                document.getElementById('modalTargetUserId').value = userId;
+                document.getElementById('modalTargetName').textContent = fullName;
+                document.getElementById('passwordResetModal').style.display = 'flex';
+            }
+
+            function closePasswordModal() {
+                document.getElementById('passwordResetModal').style.display = 'none';
+            }
+        </script>
+    @endif
     <!-- OVERVIEW TAB -->
 <section class="tab-panel {{ ($activeTab ?? 'overview') === 'overview' ? 'active' : '' }}" data-tab-panel="overview">
     <!-- Top Live Stats Counters -->
